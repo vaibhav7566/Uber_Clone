@@ -94,7 +94,7 @@ export const authService = new AuthService();
 
 // login():
 
-// Email ke basis par user find karta hai (password ke saath).
+// Email ya Phone ke basis par user find karta hai (password ke saath).
 
 // Password verify karta hai.
 
