@@ -1,5 +1,6 @@
 import express from "express";
 import authRoutes from "./modules/auth/auth.routes.js"; 
+import profileRoutes from "./modules/profile/profile.routes.js";
 
 const app = express();
 
@@ -11,5 +12,5 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth",authRoutes); // this line mounts the authRoutes on the /api/auth path. This means that any requests made to /api/auth will be handled by the authRoutes.
-
+app.use("/api/profile",profileRoutes); // this line mounts the profileRoutes on the /api/profile path. This means that any requests made to /api/profile will be handled by the profileRoutes.
 export default app;
