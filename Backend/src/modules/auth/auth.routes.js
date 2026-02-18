@@ -1,5 +1,5 @@
 import express from "express";
-import { loginController, signupController } from "./auth.contollers.js";
+import { loginController, signupController } from "./auth.controllers.js";
 import { validate } from "../../common/middleware/auth.validate.js";
 import { loginSchema, signupSchema } from "./auth.validation.js";
 

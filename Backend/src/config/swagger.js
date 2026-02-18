@@ -45,15 +45,15 @@ const options = {
     ]
   },
 
-//   apis: [
-//     './src/modules/auth/auth.controllers.js',
-//     './src/modules/profile/profile.controllers.js'
-//   ]
+  apis: [
+    './src/modules/auth/auth.controllers.js',
+    './src/modules/profile/profile.controllers.js'
+  ]
 
-apis: [
-  './src/modules/auth/*.js',
-  './src/modules/profile/*.js'
-]
+// apis: [
+//   './src/modules/auth/*.js',
+//   './src/modules/profile/*.js'
+// ]
 
 // apis: ['./src/modules/**/*.js'] // This will include all .js files in the modules directory and its subdirectories, ensuring that all your controllers with Swagger comments are included in the documentation.
 

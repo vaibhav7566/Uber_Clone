@@ -1,6 +1,7 @@
 import express from "express";
 import authRoutes from "./modules/auth/auth.routes.js";
 import profileRoutes from "./modules/profile/profile.routes.js";
+import driverRoutes from "./modules/driver/driver.routes.js";
 
 import swaggerUi from "swagger-ui-express"; //swagger-ui-express: A middleware that serves the generated Swagger documentation as an interactive web interface.
 import { swaggerSpec } from "./config/swagger.js";
@@ -33,4 +34,5 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth", authRoutes); // this line mounts the authRoutes on the /api/auth path. This means that any requests made to /api/auth will be handled by the authRoutes.
 app.use("/api/profile", profileRoutes); // this line mounts the profileRoutes on the /api/profile path. This means that any requests made to /api/profile will be handled by the profileRoutes.
+app.use("/api/driver", driverRoutes); // this line mounts the driverRoutes on the /api/driver path. This means that any requests made to /api/driver will be handled by the driverRoutes. 
 export default app;
