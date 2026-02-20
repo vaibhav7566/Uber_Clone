@@ -1,8 +1,8 @@
 import express from "express";
-import authenticate, { authorizeRole } from "../../common/middleware/auth.middleware.js";
+import { authenticate, authorizeRole } from "../../common/middleware/auth.middleware.js";
 import { validate } from "../../common/middleware/auth.validate.js";
 import { createDriverProfileSchema } from "./driver.validation.js";
-import { createProfile } from "./driver.controllers.js";
+import { createProfile, getProfileCompletion } from "./driver.controllers.js";
 
 const router = express.Router();
 
@@ -53,7 +53,7 @@ router.get(
     '/me/completion',
     authenticate,                // Middleware 1: Verify JWT token
     authorizeRole('DRIVER'),     // Middleware 2: Only DRIVER role allowed
-    getProfileCompletion         // Controller function
+    getProfileCompletion        // Controller function
 );
 
 export default router;

@@ -1,6 +1,5 @@
 import { Driver } from "../model/driver.model.js";
 
-
 // ============================================
 // DRIVER SERVICE - Business Logic Layer
 // ============================================
@@ -82,7 +81,7 @@ class DriverService {
     // ============================================
     const driver = new Driver(driverData); // Ye line driverData ko use karke ek naya Driver document create kar rahi hai. Abhi ye document database mein save nahi hua hai, bas ek instance ban gaya hai.
     await driver.save(); // Ye line driver document ko database mein save kar rahi hai. Jab ye line execute hoti hai, tabhi database mein ek naya record create hota hai.
-    await driver.populate("userId", "name email phone role"); // Ye line driver document ke userId field ko populate kar rahi hai. Populate ka matlab hai ki userId field mein jo ObjectId stored hai, uske corresponding User document ko fetch karke uske name, email, phone, aur role fields ko driver document ke userId field mein embed kar dena.
+    await driver.populate("userId", "name email phone role"); // Ye line driver document ke userId field ko populate kar rahi hai. Populate ka matlab hai ki userId field mein jo ObjectId stored hai, uske corresponding User document ko fetch (matlab response me dikha do) karke uske name, email, phone, aur role fields ko driver document ke userId field mein embed kar dena.  Matlab: userId se → Complete info (sirf API response ke liye, DB same rehta hai!) 🔥
 
     // ============================================
     // STEP 4: Return formatted response
@@ -92,85 +91,118 @@ class DriverService {
     return this.formatDriverResponse(driver);
   }
 
-
-
-
-
   // ============================================
-    // FORMAT DRIVER RESPONSE
+  // GET PROFILE COMPLETION DETAILS
+  // ============================================
+  // Purpose: Show driver what fields are missing
+  //
+  // Flow:
+  // 1. Find driver profile
+  // 2. Get missing fields from model method
+  // 3. Return completion details
+  //
+  // Parameters:
+  //   - userId: ObjectId of User
+  //
+  // Returns: Object with completion percentage, missing fields, and status
+  //
+  // Throws:
+  //   - Error if profile not found
+  async getProfileCompletion(userId) {
     // ============================================
-    // Purpose: Format driver data for API response
-    // Masks Aadhar number for security
-    // Includes user basic info
-    //
-    // Parameters:
-    //   - driver: Driver document from database
-    //
-    // Returns: Formatted object for API response
-    //
-    // Security:
-    //   - Aadhar is masked (XXXX XXXX 9012)
-    //   - Only necessary user fields included
-    formatDriverResponse(driver) {
-        return {
-            // Driver ID
-            _id: driver._id,
+    // STEP 1: Find driver profile
+    // ============================================
+    // Find driver where userId matches
+    // Populate userId with User data (name, email, phone, role)
+    // Returns null if not found
+    const driver = await Driver.findOne({ userId }).populate("userId", "name email phone role"); // Ye line database mein Driver collection ko query kar rahi hai, jahan userId field userId parameter ke barabar ho. Agar aisa driver profile milta hai, to uske userId field ko populate kar diya jata hai, jiska matlab hai ki userId field mein jo ObjectId stored hai, uske corresponding User document ko fetch karke uske name, email, phone, aur role fields ko driver document ke userId field mein embed kar dena. Agar aisa driver profile nahi milta hai, to driver variable null ho jayega.
 
-            // User basic info (from populated userId)
-            user: {
-                _id: driver.userId._id,
-                name: driver.userId.name,
-                email: driver.userId.email,
-                phone: driver.userId.phone
-            },
-
-            // Personal information
-            personalInformation: {
-                languagePreference: driver.personalInformation.languagePreference,
-                city: driver.personalInformation.city,
-                profilePicture: driver.personalInformation.profilePicture,
-                aadharNumber: driver.getMaskedAadhar()  // MASKED: XXXX XXXX 9012
-            },
-
-            // Documents
-            documents: {
-                licenseNumber: driver.documents.licenseNumber,
-                licenseExpiry: driver.documents.licenseExpiry,
-                rcNumber: driver.documents.rcNumber,
-                rcExpiry: driver.documents.rcExpiry
-            },
-
-            // Vehicle information
-            vehicleInfo: {
-                vehicleType: driver.vehicleInfo.vehicleType,
-                vehicleNumber: driver.vehicleInfo.vehicleNumber,
-                vehicleModel: driver.vehicleInfo.vehicleModel,
-                vehicleColor: driver.vehicleInfo.vehicleColor
-            },
-
-            // Status
-            status: {
-                isOnline: driver.status.isOnline,
-                isVerified: driver.status.isVerified,
-                profileCompletionPercentage: driver.status.profileCompletionPercentage
-            },
-
-            // Statistics
-            stats: {
-                rating: driver.stats.rating,
-                totalRides: driver.stats.totalRides
-            },
-
-            // Timestamps
-            createdAt: driver.createdAt,
-            updatedAt: driver.updatedAt
-        };
+    if (!driver) {
+      // Profile not found
+      throw new Error("Driver profile not found");
     }
 
+    // ============================================
+    // STEP 2: Return completion details
+    // ============================================
+    return {
+      completionPercentage: driver.status.profileCompletionPercentage, // 0-100
+      missingFields: driver.getMissingFields(), // Array of missing optional fields
+      canGoOnline: driver.canGoOnline(), // Boolean (can driver go online?)
+      isVerified: driver.status.isVerified, // Boolean (is admin verified?)
+    };
+  }
+
+  // ============================================
+  // FORMAT DRIVER RESPONSE
+  // ============================================
+  // Purpose: Format driver data for API response
+  // Masks Aadhar number for security
+  // Includes user basic info
+  //
+  // Parameters:
+  //   - driver: Driver document from database
+  //
+  // Returns: Formatted object for API response
+  //
+  // Security:
+  //   - Aadhar is masked (XXXX XXXX 9012)
+  //   - Only necessary user fields included
+  formatDriverResponse(driver) {
+    return {
+      // Driver ID
+      _id: driver._id,
+
+      // User basic info (from populated userId)
+      user: {
+        _id: driver.userId._id,
+        name: driver.userId.name,
+        email: driver.userId.email,
+        phone: driver.userId.phone,
+      },
+
+      // Personal information
+      personalInformation: {
+        languagePreference: driver.personalInformation.languagePreference,
+        city: driver.personalInformation.city,
+        profilePicture: driver.personalInformation.profilePicture,
+        aadharNumber: driver.getMaskedAadhar(), // MASKED: XXXX XXXX 9012
+      },
+
+      // Documents
+      documents: {
+        licenseNumber: driver.documents.licenseNumber,
+        licenseExpiry: driver.documents.licenseExpiry,
+        rcNumber: driver.documents.rcNumber,
+        rcExpiry: driver.documents.rcExpiry,
+      },
+
+      // Vehicle information
+      vehicleInfo: {
+        vehicleType: driver.vehicleInfo.vehicleType,
+        vehicleNumber: driver.vehicleInfo.vehicleNumber,
+        vehicleModel: driver.vehicleInfo.vehicleModel,
+        vehicleColor: driver.vehicleInfo.vehicleColor,
+      },
+
+      // Status
+      status: {
+        isOnline: driver.status.isOnline,
+        isVerified: driver.status.isVerified,
+        profileCompletionPercentage: driver.status.profileCompletionPercentage,
+      },
+
+      // Statistics
+      stats: {
+        rating: driver.stats.rating,
+        totalRides: driver.stats.totalRides,
+      },
+
+      // Timestamps
+      createdAt: driver.createdAt,
+      updatedAt: driver.updatedAt,
+    };
+  }
 }
-
-
-
-
 
 export const driverService = new DriverService();

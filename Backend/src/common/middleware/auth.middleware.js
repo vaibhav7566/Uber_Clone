@@ -52,9 +52,8 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-
-
-const authorizeRole = (...allRequiredRoles) => {   // This function takes in a list of roles that are allowed to access a particular route. It returns a middleware function that checks if the authenticated user's role is included in the list of allowed roles. If the user's role is not included, it responds with a 403 Forbidden status and an appropriate message. If the user's role is included, it allows the request to proceed to the next middleware or route handler.
+const authorizeRole = (...allRequiredRoles) => {
+  // This function takes in a list of roles that are allowed to access a particular route. It returns a middleware function that checks if the authenticated user's role is included in the list of allowed roles. If the user's role is not included, it responds with a 403 Forbidden status and an appropriate message. If the user's role is included, it allows the request to proceed to the next middleware or route handler.
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -63,7 +62,8 @@ const authorizeRole = (...allRequiredRoles) => {   // This function takes in a l
       });
     }
 
-    if (!allRequiredRoles.includes(req.user.role)) {  // Check if the user's role is included in the list of allowed roles
+    if (!allRequiredRoles.includes(req.user.role)) {
+      // Check if the user's role is included in the list of allowed roles
       return res.status(403).json({
         success: false,
         message: `Access denied. Only ${allRequiredRoles.join(", ")} can access this resource`,
