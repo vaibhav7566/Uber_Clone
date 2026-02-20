@@ -42,19 +42,20 @@ class DriverService {
     // ============================================
     // STEP 1: Check if profile already exists
     // ============================================
-    const count = await Driver.countDocuments({ userId });
+    const count = await Driver.countDocuments({ userId }); // Ye line user find karke count bata rahi hai - basically ye check kar rahi hai ki userId wala driver profile already exist karta hai ya nahi.
 
     if (count > 0) {
       throw new Error("Driver profile already exists");
     }
 
+    console.log("Received profile data:", profileData);
     // ============================================
     // STEP 2: Structure data according to model schema
     // ============================================
     const driverData = {
       userId,
 
-      personalInfo: {
+      personalInformation: {
         languagePreference: profileData.languagePreference,
         city: profileData.city,
         aadharNumber: profileData.aadharNumber,
@@ -79,9 +80,9 @@ class DriverService {
     // ============================================
     // STEP 3: Create profile in database
     // ============================================
-    const driver = new Driver(driverData);
-    await driver.save();
-    await driver.populate("userId", "name email phone role");
+    const driver = new Driver(driverData); // Ye line driverData ko use karke ek naya Driver document create kar rahi hai. Abhi ye document database mein save nahi hua hai, bas ek instance ban gaya hai.
+    await driver.save(); // Ye line driver document ko database mein save kar rahi hai. Jab ye line execute hoti hai, tabhi database mein ek naya record create hota hai.
+    await driver.populate("userId", "name email phone role"); // Ye line driver document ke userId field ko populate kar rahi hai. Populate ka matlab hai ki userId field mein jo ObjectId stored hai, uske corresponding User document ko fetch karke uske name, email, phone, aur role fields ko driver document ke userId field mein embed kar dena.
 
     // ============================================
     // STEP 4: Return formatted response
@@ -91,7 +92,85 @@ class DriverService {
     return this.formatDriverResponse(driver);
   }
 
+
+
+
+
+  // ============================================
+    // FORMAT DRIVER RESPONSE
+    // ============================================
+    // Purpose: Format driver data for API response
+    // Masks Aadhar number for security
+    // Includes user basic info
+    //
+    // Parameters:
+    //   - driver: Driver document from database
+    //
+    // Returns: Formatted object for API response
+    //
+    // Security:
+    //   - Aadhar is masked (XXXX XXXX 9012)
+    //   - Only necessary user fields included
+    formatDriverResponse(driver) {
+        return {
+            // Driver ID
+            _id: driver._id,
+
+            // User basic info (from populated userId)
+            user: {
+                _id: driver.userId._id,
+                name: driver.userId.name,
+                email: driver.userId.email,
+                phone: driver.userId.phone
+            },
+
+            // Personal information
+            personalInformation: {
+                languagePreference: driver.personalInformation.languagePreference,
+                city: driver.personalInformation.city,
+                profilePicture: driver.personalInformation.profilePicture,
+                aadharNumber: driver.getMaskedAadhar()  // MASKED: XXXX XXXX 9012
+            },
+
+            // Documents
+            documents: {
+                licenseNumber: driver.documents.licenseNumber,
+                licenseExpiry: driver.documents.licenseExpiry,
+                rcNumber: driver.documents.rcNumber,
+                rcExpiry: driver.documents.rcExpiry
+            },
+
+            // Vehicle information
+            vehicleInfo: {
+                vehicleType: driver.vehicleInfo.vehicleType,
+                vehicleNumber: driver.vehicleInfo.vehicleNumber,
+                vehicleModel: driver.vehicleInfo.vehicleModel,
+                vehicleColor: driver.vehicleInfo.vehicleColor
+            },
+
+            // Status
+            status: {
+                isOnline: driver.status.isOnline,
+                isVerified: driver.status.isVerified,
+                profileCompletionPercentage: driver.status.profileCompletionPercentage
+            },
+
+            // Statistics
+            stats: {
+                rating: driver.stats.rating,
+                totalRides: driver.stats.totalRides
+            },
+
+            // Timestamps
+            createdAt: driver.createdAt,
+            updatedAt: driver.updatedAt
+        };
+    }
+
 }
+
+
+
 
 
 export const driverService = new DriverService();

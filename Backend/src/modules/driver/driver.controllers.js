@@ -66,6 +66,7 @@ export const createProfile = async (req, res) => {
     // req.body contains profile data
     // Already validated by validate middleware
     const profileData = req.body;
+    // console.log(req.body);
 
     // ============================================
     // STEP 2: Call service to create profile
@@ -96,4 +97,80 @@ export const createProfile = async (req, res) => {
       message: error.message || "Failed to create driver profile",
     });
   }
+};
+
+
+
+// ============================================
+// GET PROFILE COMPLETION DETAILS
+// ============================================
+// Endpoint: GET /api/driver/me/completion
+// Access: Private (DRIVER only)
+// Purpose: Show what fields are missing
+//
+// Request Headers:
+//   Authorization: Bearer <jwt_token>
+//
+// Response (200 OK):
+// {
+//     "success": true,
+//     "data": {
+//         "completionPercentage": 70,
+//         "missingFields": [
+//             { "field": "profilePicture", "weight": 10, "label": "Profile Picture" },
+//             { "field": "vehicleModel", "weight": 5, "label": "Vehicle Model" }
+//         ],
+//         "canGoOnline": false,
+//         "isVerified": false
+//     },
+//     "message": "Profile completion details"
+// }
+//
+// Error Responses:
+// - 401: Unauthorized (no token or invalid token)
+// - 403: Forbidden (not DRIVER role)
+// - 404: Not found (profile doesn't exist)
+// - 500: Server error
+//
+// Use Case:
+// - Show driver their profile completion percentage
+// - Show what fields they need to fill
+// - Show if they can go online
+// - Show if admin has verified them
+export const getProfileCompletion = async (req, res) => {
+    try {
+        // ============================================
+        // STEP 1: Extract userId from request
+        // ============================================
+        const userId = req.user._id;
+
+        // ============================================
+        // STEP 2: Call service to get completion details
+        // ============================================
+        // Service returns completion percentage and missing fields
+        const completion = await driverService.getProfileCompletion(userId);
+
+        // ============================================
+        // STEP 3: Send success response
+        // ============================================
+        // Status 200: OK (request successful)
+        res.status(200).json({
+            success: true,
+            data: completion,
+            message: 'Profile completion details'
+        });
+    } catch (error) {
+        // ============================================
+        // ERROR HANDLING
+        // ============================================
+        // Log error for debugging
+        console.error('Error in getProfileCompletion:', error);
+
+        // Send error response
+        // Status 500: Internal Server Error
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to get profile completion details'
+        });
+    }
 };

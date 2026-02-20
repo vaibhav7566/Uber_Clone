@@ -74,4 +74,4 @@ const authorizeRole = (...allRequiredRoles) => {   // This function takes in a l
   };
 };
 
-export default authenticate;
+export { authenticate, authorizeRole };

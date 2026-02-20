@@ -237,11 +237,11 @@ driverSchema.index({ userId: 1 });
 driverSchema.pre("save", function () {
   // Only encrypt if aadhar is modified and not already encrypted
   if (
-    this.isModified("personalInfo.aadharNumber") && // checks first time save ya update me aadhar change hua hai
-    this.personalInfo.aadharNumber && // aadhar number exists
-    !this.personalInfo.aadharNumber.includes(":") // simple check to see if already encrypted (encrypted format contains ":")
+    this.isModified("personalInformation.aadharNumber") && // checks first time save ya update me aadhar change hua hai
+    this.personalInformation.aadharNumber && // aadhar number exists
+    !this.personalInformation.aadharNumber.includes(":") // simple check to see if already encrypted (encrypted format contains ":")
   ) {
-    this.personalInfo.aadharNumber = encrypt(this.personalInfo.aadharNumber); // encrypt function ko call karta hai to encrypt aadhar number before saving
+    this.personalInformation.aadharNumber = encrypt(this.personalInformation.aadharNumber); // encrypt function ko call karta hai to encrypt aadhar number before saving
   }
 });
 
@@ -263,15 +263,15 @@ driverSchema.methods.calculateProfileCompletion = function () {
   let percentage = 0;
 
   // Required fields (70% total)
-  if (this.personalInfo.languagePreference) percentage += 10;
-  if (this.personalInfo.city) percentage += 10;
-  if (this.personalInfo.aadharNumber) percentage += 15;
+  if (this.personalInformation.languagePreference) percentage += 10;
+  if (this.personalInformation.city) percentage += 10;
+  if (this.personalInformation.aadharNumber) percentage += 15;
   if (this.documents.licenseNumber) percentage += 15;
   if (this.documents.rcNumber) percentage += 10;
   if (this.vehicleInfo.vehicleType) percentage += 10;
 
   // Optional fields (30% total)
-  if (this.personalInfo.profilePicture) percentage += 10;
+  if (this.personalInformation.profilePicture) percentage += 10;
   if (this.documents.licenseExpiry) percentage += 5;
   if (this.documents.rcExpiry) percentage += 5;
   if (this.vehicleInfo.vehicleModel) percentage += 5;
@@ -286,10 +286,10 @@ driverSchema.methods.calculateProfileCompletion = function () {
 // Returns aadhar with only last 4 digits visible
 // Example: "XXXX XXXX 9012"
 driverSchema.methods.getMaskedAadhar = function () {
-  if (!this.personalInfo.aadharNumber) return null;
+  if (!this.personalInformation.aadharNumber) return null;
 
   // Decrypt first, then mask
-  const decrypted = decrypt(this.personalInfo.aadharNumber);
+  const decrypted = decrypt(this.personalInformation.aadharNumber);
   return maskAadhar(decrypted);
 };
 
@@ -302,7 +302,7 @@ driverSchema.methods.getMissingFields = function () {
   const missing = [];
 
   // Check optional fields
-  if (!this.personalInfo.profilePicture) {
+  if (!this.personalInformation.profilePicture) {
     missing.push({
       field: "profilePicture",
       weight: 10,
