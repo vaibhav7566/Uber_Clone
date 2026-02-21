@@ -47,7 +47,8 @@ const options = {
 
   apis: [
     './src/modules/auth/auth.controllers.js',
-    './src/modules/profile/profile.controllers.js'
+    './src/modules/profile/profile.controllers.js',
+    './src/modules/driver/driver.controllers.js'
   ]
 
 // apis: [
