@@ -9,6 +9,24 @@ import { swaggerSpec } from "./config/swagger.js";
 
 const app = express();
 
+// ============================================
+// CORS MIDDLEWARE
+// ============================================
+// Allows frontend (localhost:5173) to make requests to backend (localhost:3000)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+  
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 app.use(express.json()); // this middleware is used to parse the incoming request body as JSON. It allows us to access the data sent in the request body using req.body in our route handlers.
 app.use(express.urlencoded({ extended: true })); // this middleware is used to parse the incoming request body as URL-encoded data(form data). It allows us to access the data sent in the request body using req.body in our route handlers. The extended option allows for rich objects and arrays to be encoded into the URL-encoded format, which can be useful for complex data structures.
 
