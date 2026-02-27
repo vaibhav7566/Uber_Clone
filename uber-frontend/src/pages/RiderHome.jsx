@@ -118,6 +118,7 @@ import {useGSAP} from "@gsap/react";
 import 'remixicon/fonts/remixicon.css'
 import LocationSearchPanel from "../components/LocationSearchPanel";
 import VehiclePanel from '../components/VehiclePanel';
+import ConfirmRide from '../components/ConfirmRide';
 
 
 const RiderHome = () => {
@@ -129,11 +130,14 @@ const RiderHome = () => {
     const panelCloseRef = useRef(null)
     const [vehiclePanelOpen, setVehiclePanelOpen] = useState(false);
     const vehiclePanelRef = useRef(null);
+    const [confirmRidePanel, setConfirmRidePanel] = useState(false);
+    const confirmRidePanelRef = useRef(null);
 
     const submitHandler = (e) => {
         e.preventDefault()
     }
 
+    // it is used to open and close the location search panel
     useGSAP(function () {
         if (panelOpen) {
             gsap.to(panelRef.current, {
@@ -156,7 +160,7 @@ const RiderHome = () => {
         }
     }, [panelOpen])
 
-
+// it is used to open and close the vehicle panel
     useGSAP(function () {
         if (vehiclePanelOpen) {
             gsap.to(vehiclePanelRef.current, {
@@ -169,17 +173,18 @@ const RiderHome = () => {
         }
     }, [vehiclePanelOpen])
 
-    // useGSAP(function () {
-    //     if (confirmRidePanel) {
-    //         gsap.to(confirmRidePanelRef.current, {
-    //             transform: 'translateY(0)'
-    //         })
-    //     } else {
-    //         gsap.to(confirmRidePanelRef.current, {
-    //             transform: 'translateY(100%)'
-    //         })
-    //     }
-    // }, [confirmRidePanel])
+// it is used to open and close the confirm ride panel
+    useGSAP(function () {
+        if (confirmRidePanel) {
+            gsap.to(confirmRidePanelRef.current, {
+                transform: 'translateY(0)'
+            })
+        } else {
+            gsap.to(confirmRidePanelRef.current, {
+                transform: 'translateY(100%)'
+            })
+        }
+    }, [confirmRidePanel])
 
     return (
         <div className='h-screen relative overflow-hidden'>
@@ -203,7 +208,7 @@ const RiderHome = () => {
                     <form onSubmit={(e) => {
                         submitHandler(e)
                     }}>
-                        <div className="line absolute h-15 w-1 top-[50%] left-10 bg-gray-700 rounded-full"></div>
+                        <div className="line absolute h-15 w-[1.2%] top-[50%] left-10 bg-gray-700 rounded-full"></div>
                         <input
                             onClick={() => {
                                 setPanelOpen(true)
@@ -212,7 +217,7 @@ const RiderHome = () => {
                             onChange={(e) => {
                                 setPickup(e.target.value)
                             }}
-                            className='bg-[#eee] px-12 py-2 text-lg rounded-lg w-full mt-5'
+                            className='bg-[#eee] px-11 py-2 text-lg rounded-lg w-full mt-5'
                             type="text"
                             placeholder='Add a pick-up location'
                         />
@@ -224,7 +229,7 @@ const RiderHome = () => {
                             onChange={(e) => {
                                 setDestination(e.target.value)
                             }}
-                            className='bg-[#eee] px-12 py-2 text-lg rounded-lg w-full  mt-3'
+                            className='bg-[#eee] px-11 py-2 text-lg rounded-lg w-full  mt-3'
                             type="text"
                             placeholder='Enter your destination' />
                     </form>
@@ -234,12 +239,11 @@ const RiderHome = () => {
                 </div>
             </div>
              <div ref={vehiclePanelRef} className='fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-10 pt-12'>
-                <VehiclePanel  setVehiclePanelOpen={setVehiclePanelOpen} />    
-                {/* setConfirmRidePanel={setConfirmRidePanel} */}
+                <VehiclePanel  setVehiclePanelOpen={setVehiclePanelOpen} setConfirmRidePanel={setConfirmRidePanel} />    
             </div>
-            {/* <div ref={confirmRidePanelRef} className='fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-6 pt-12'>
-                <ConfirmRide />
-            </div>  */}
+            <div ref={confirmRidePanelRef} className='fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-6 pt-12'>
+                <ConfirmRide setConfirmRidePanel={setConfirmRidePanel} setVehiclePanelOpen={setVehiclePanelOpen} />
+            </div> 
         </div>
     )
 }
