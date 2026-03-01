@@ -1,13 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { isTokenExpired } from "../../utils/jwtHelper";
 
 const initialState = {
   user: null,
   token: localStorage.getItem("token") || null,
   role: null,
-  isAuthenticated: !!localStorage.getItem("token"),
+  isAuthenticated: !!localStorage.getItem("token") && !isTokenExpired(localStorage.getItem("token")),
   loading: false,
   error: null,
 };
+
+// If token is expired on app load, clear it
+if (initialState.token && isTokenExpired(initialState.token)) {
+  localStorage.removeItem("token");
+  initialState.token = null;
+  initialState.isAuthenticated = false;
+}
 
 const authSlice = createSlice({
   name: "auth",
