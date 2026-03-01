@@ -32,6 +32,7 @@ import DriverDashboard from "../pages/DriverDashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import Riding from "../components/Riding";
+import DriverRegistration from "../pages/DriverRegistration";
 
 export const router = createBrowserRouter([
   {
@@ -75,6 +76,15 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Riding />
+      </ProtectedRoute> 
+    ),
+  },
+
+   {
+    path: "/driver/registration",
+    element: (
+      <ProtectedRoute>
+        <DriverRegistration />
       </ProtectedRoute> 
     ),
   }

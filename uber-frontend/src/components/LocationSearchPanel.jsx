@@ -18,6 +18,7 @@ const LocationSearchPanel = (props) => {
         return <div key={index} onClick={()=> {
           props.setVehiclePanelOpen(true);
           props.setPanelOpen(false);
+          
         }}
          className="flex items-center justify-start gap-4 my-3 border-gray-200 active:border-gray-700 border-2  rounded-xl px-3 py-1 ">
         <h2>
