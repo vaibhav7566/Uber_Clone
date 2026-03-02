@@ -1,5 +1,7 @@
 import axios from "axios";
-
+import { store } from "../store/store.js";
+import { logout } from "../features/auth/authSlice.js";
+import { toast } from "react-toastify";
 
 // API instance
 // Axios instance will:
@@ -33,5 +35,26 @@ API.interceptors.request.use((config) => {  // config = Axios request config obj
 
   return config;
 });
+
+// Response Interceptor - Handle 401 errors (token expired)
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem("token");
+      store.dispatch(logout());
+      
+      // Show toast first, then redirect after it's visible
+      toast.error("Session expired. Please login again!", {
+        autoClose: 3000,
+        onClose: () => {
+          window.location.href = "/login";
+        }
+      });
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default API;

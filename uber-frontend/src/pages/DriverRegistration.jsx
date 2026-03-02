@@ -69,9 +69,12 @@ function DriverRegistration() {
         }, 1500);
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
-      toast.error(`❌ ${errorMessage}`);
-      console.error("Driver registration error:", error);
+      // Skip error handling for 401 - response interceptor handles it
+      if (error.response?.status !== 401) {
+        const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+        toast.error(`❌ ${errorMessage}`);
+        console.error("Driver registration error:", error);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -16,5 +16,5 @@ export const env = {
   AUTHOR_NAME: process.env.AUTHOR_NAME,
   MONGODB_URI: process.env.MONGODB_URI,
   JWT_SECRET: process.env.JWT_SECRET,
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "1d",
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
 };
