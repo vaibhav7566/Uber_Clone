@@ -7,3 +7,7 @@ export const signupUser = (data) => {
 export const loginUser = (data) => {
   return API.post("/auth/login", data)
 }
+
+export const registerDriver = (data) => {
+  return API.post("/driver/register", data)
+}

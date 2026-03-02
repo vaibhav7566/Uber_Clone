@@ -1,12 +1,16 @@
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { registerDriver } from "../features/auth/authAPI";
 
 const STEPS = ["Personal Info", "Documents", "Vehicle Info"];
 
 function DriverRegistration() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -30,13 +34,47 @@ function DriverRegistration() {
     }
   };
 
-  const handleBack = () => setCurrentStep((s) => s - 1);
-
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     const final = { ...formData, ...data };
-    console.log("Driver Registration Data:", final);
-    // TODO: call your API here
-    toast("Registration submitted! Awaiting admin approval.");
+    
+    // Clean up data - remove empty strings, File objects, and undefined values
+    const cleanedData = {};
+    
+    Object.entries(final).forEach(([key, value]) => {
+      // Skip empty strings, File objects, undefined, null
+      if (value === undefined || value === null || value === "" || value instanceof File) {
+        return; // Skip this field
+      }
+      
+      // Format date fields
+      if ((key === "licenseExpiry" || key === "rcExpiry") && value) {
+        cleanedData[key] = new Date(value).toISOString().split("T")[0];
+      } else {
+        cleanedData[key] = value;
+      }
+    });
+    
+    console.log("Cleaned data being sent:", cleanedData);
+    
+    setIsLoading(true);
+    try {
+      const response = await registerDriver(cleanedData);
+      
+      if (response.data.success) {
+        toast.success("✅ Driver registration successful!");
+        
+        // Redirect to driver dashboard after 1.5 seconds
+        setTimeout(() => {
+          navigate("/driver/dashboard");
+        }, 1500);
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+      toast.error(`❌ ${errorMessage}`);
+      console.error("Driver registration error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const inputClass = (hasError) =>
@@ -189,8 +227,8 @@ function DriverRegistration() {
                   </label>
                   <input
                     {...register("profilePicture")}
-                    type="file"
-                    accept="image/*"
+                    // type="file"
+                    // accept="image/*"
                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-500 focus:outline-none focus:border-black transition-colors bg-white file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-black file:text-white hover:file:bg-zinc-800"
                   />
                 </div>
@@ -232,7 +270,7 @@ function DriverRegistration() {
                   </label>
                   <input
                     {...register("rcNumber", { required: "RC number is required" })}
-                    placeholder="e.g. MH12AB1234"
+                    placeholder="e.g. CG04-2024-00098765"
                     className={inputClass(errors.rcNumber)}
                   />
                   {errors.rcNumber && (
@@ -354,9 +392,24 @@ function DriverRegistration() {
               ) : (
                 <button
                   type="submit"
-                  className="bg-black hover:bg-zinc-800 text-white font-semibold py-3 px-8 rounded-lg text-base transition-colors duration-200"
+                  disabled={isLoading}
+                  className={`${
+                    isLoading 
+                      ? "bg-gray-400 cursor-not-allowed" 
+                      : "bg-black hover:bg-zinc-800"
+                  } text-white font-semibold py-3 px-8 rounded-lg text-base transition-colors duration-200 flex items-center justify-center gap-2`}
                 >
-                  Submit
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
                 </button>
               )}
             </div>

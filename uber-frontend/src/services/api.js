@@ -1,6 +1,5 @@
 import axios from "axios";
-import { store } from "../store/store";
-import { logout } from "../features/auth/authSlice";
+
 
 // API instance
 // Axios instance will:
@@ -34,24 +33,5 @@ API.interceptors.request.use((config) => {  // config = Axios request config obj
 
   return config;
 });
-
-// Response interceptor to handle 401 (unauthorized/expired token)
-API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // If backend returns 401 (Unauthorized/Token Expired)
-    if (error.response?.status === 401) {
-      // Clear token from localStorage
-      localStorage.removeItem("token");
-      
-      // Dispatch logout action to Redux
-      store.dispatch(logout());
-      
-      // Redirect to login page
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default API;
