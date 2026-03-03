@@ -30,15 +30,25 @@ const userSchema = new mongoose.Schema(
       minlength: [6, "Password must be atleast 6 characters"],
       select: false, // this will prevent the password from being returned in any query results by default.
     },
+    // role: {
+    //   type: String,
+    //   enum: {
+    //     values: ["RIDER", "DRIVER"],
+    //     message: "Role must be either RIDER or DRIVER",
+    //   },
+    //   default: "RIDER",
+    // },
+
     role: {
       type: String,
       enum: {
-        values: ["RIDER", "DRIVER"],
-        message: "Role must be either RIDER or DRIVER",
+        values: ["RIDER", "DRIVER", "ADMIN"], // ← Add "ADMIN"
+        message: "Role must be either RIDER, DRIVER or ADMIN",
       },
       default: "RIDER",
     },
-    isActive: {  // this field is used to soft delete a user. Instead of actually deleting the user from the database, we can set this field to false to indicate that the user is no longer active.
+    isActive: {
+      // this field is used to soft delete a user. Instead of actually deleting the user from the database, we can set this field to false to indicate that the user is no longer active.
       type: Boolean,
       default: true,
     },
@@ -50,7 +60,8 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ email: 1 }); // creates an index on the email field to improve query performance when searching for users by email.
 
-userSchema.pre("save", async function () {  // this is a pre-save hook that will run before a user document is saved to the database. It checks if the password field has been modified, and if so, it hashes the password using bcrypt before saving it to the database.
+userSchema.pre("save", async function () {
+  // this is a pre-save hook that will run before a user document is saved to the database. It checks if the password field has been modified, and if so, it hashes the password using bcrypt before saving it to the database.
   if (!this.isModified("password")) {
     return;
   }
@@ -61,9 +72,8 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.methods.generateAuthToken = function () 
-{ 
-  return jwt.sign( 
+userSchema.methods.generateAuthToken = function () {
+  return jwt.sign(
     {
       _id: this._id,
       role: this.role,

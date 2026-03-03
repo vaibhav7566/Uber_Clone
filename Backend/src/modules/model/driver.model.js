@@ -166,6 +166,37 @@ const driverSchema = new mongoose.Schema(
     },
 
     // ============================================
+    // ADMIN APPROVAL WORKFLOW
+    // ============================================
+    approvalStatus: {
+      // Status of driver registration (PENDING, APPROVED, REJECTED)
+      // PENDING: Awaiting admin review
+      // APPROVED: Admin approved, user role changes to DRIVER
+      // REJECTED: Admin rejected, driver cannot reapply
+      status: {
+        type: String,
+        enum: {
+          values: ["PENDING", "APPROVED", "REJECTED"],
+          message: "Status must be PENDING, APPROVED, or REJECTED",
+        },
+        default: "PENDING",
+      },
+
+      // Admin's feedback/reason (optional)
+      adminNotes: {
+        type: String,
+        trim: true,
+        default: null,
+      },
+
+      // When was this status last updated?
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+
+    // ============================================
     // STATISTICS
     // ============================================
 

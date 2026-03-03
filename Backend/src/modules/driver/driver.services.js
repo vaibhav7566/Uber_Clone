@@ -427,6 +427,140 @@ class DriverService {
       updatedAt: driver.updatedAt,
     };
   }
+
+  // ============================================
+  // ADMIN APPROVAL SERVICES
+  // ============================================
+
+  /**
+   * Get all drivers with PENDING approval status
+   * Returns: Array of pending driver documents with user details
+   */
+  getPendingDrivers = async () => {
+    try {
+      // Find all drivers with PENDING status
+      // Populate user details (name, email, phone)
+      const drivers = await Driver.find({
+        "approvalStatus.status": "PENDING",
+      })
+        .populate("userId", "name email phone")
+        .sort({ createdAt: -1 }); // Latest first
+
+      // Format response
+      return drivers.map((driver) => ({
+        _id: driver._id,
+        userId: driver.userId._id,
+        userName: driver.userId.name,
+        userEmail: driver.userId.email,
+        userPhone: driver.userId.phone,
+        personalInfo: driver.personalInformation,
+        documents: driver.documents,
+        vehicleInfo: driver.vehicleInfo,
+        profileCompletion: driver.status.profileCompletionPercentage,
+        approvalStatus: driver.approvalStatus.status,
+        submittedAt: driver.createdAt,
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch pending drivers: ${error.message}`);
+    }
+  };
+
+  /**
+   * Approve a driver registration
+   * Updates:
+   * 1. Driver: approvalStatus.status = "APPROVED"
+   * 2. User: role = "DRIVER"
+   * 3. Driver: isVerified = true
+   */
+  approveDriver = async (driverId, adminId, adminNotes = null) => {
+    try {
+      // Step 1: Check if driver exists
+      const driver = await Driver.findById(driverId);
+      if (!driver) {
+        const error = new Error("Driver not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Step 2: Check if already approved
+      if (driver.approvalStatus.status === "APPROVED") {
+        const error = new Error("Driver is already approved");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      // Step 3: Update driver approval status
+      driver.approvalStatus.status = "APPROVED";
+      driver.approvalStatus.adminNotes = adminNotes || "Approved by admin";
+      driver.approvalStatus.updatedAt = new Date();
+      driver.status.isVerified = true; // Mark as verified
+      await driver.save();
+
+      // Step 4: Update user role to DRIVER
+      const user = await User.findByIdAndUpdate(
+        driver.userId,
+        { role: "DRIVER" },
+        { new: true },
+      );
+
+      if (!user) {
+        const error = new Error("User not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      return {
+        driver: {
+          _id: driver._id,
+          approvalStatus: driver.approvalStatus.status,
+        },
+        user: {
+          _id: user._id,
+          role: user.role,
+          name: user.name,
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  /**
+   * Reject a driver registration
+   * Updates: Driver: approvalStatus.status = "REJECTED" + reason
+   */
+  rejectDriver = async (driverId, adminId, reason) => {
+    try {
+      // Step 1: Check if driver exists
+      const driver = await Driver.findById(driverId);
+      if (!driver) {
+        const error = new Error("Driver not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Step 2: Check if already rejected
+      if (driver.approvalStatus.status === "REJECTED") {
+        const error = new Error("Driver is already rejected");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      // Step 3: Update rejection status
+      driver.approvalStatus.status = "REJECTED";
+      driver.approvalStatus.adminNotes = reason;
+      driver.approvalStatus.updatedAt = new Date();
+      await driver.save();
+
+      return {
+        _id: driver._id,
+        approvalStatus: driver.approvalStatus.status,
+        rejectionReason: reason,
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
 }
 
 export const driverService = new DriverService();

@@ -5,14 +5,19 @@ import {
 } from "../../common/middleware/auth.middleware.js";
 import { validate } from "../../common/middleware/auth.validate.js";
 import {
+  approveDriverSchema,
   createDriverProfileSchema,
+  rejectDriverSchema,
   updateDriverProfileSchema,
   updateStatusSchema,
 } from "./driver.validation.js";
 import {
+  approveDriver,
   createProfile,
+  getPendingDrivers,
   getProfile,
   getProfileCompletion,
+  rejectDriver,
   updateProfile,
   updateStatus,
 } from "./driver.controllers.js";
@@ -162,6 +167,104 @@ router.patch(
   validate(updateDriverProfileSchema), // Middleware 3: Validate request body
   updateProfile, // Controller function
 );
+
+
+
+// ============================================
+// ADMIN ROUTES - Driver Approval Management
+// ============================================
+// All routes require ADMIN role
+// Base path: /api/driver
+
+
+// GET /api/driver/admin/pending
+// Access: Private (ADMIN only)
+// Purpose: List all pending driver registrations
+// Middleware Chain:
+// 1. authenticate → Verify JWT token, set req.user
+// 2. authorizeRole('ADMIN') → Check if user.role === 'ADMIN'
+// 3. getPendingDrivers → Handle request
+// Test in Postman:
+// Method: GET
+// URL: http://localhost:5000/api/driver/admin/pending
+// Headers:
+//   {
+//     "Authorization": "Bearer <admin_token>"
+//   }
+router.get(
+  "/admin/pending",
+  authenticate,
+  authorizeRole("ADMIN"),
+  getPendingDrivers
+);
+
+
+
+// POST /api/driver/admin/approve
+// Access: Private (ADMIN only)
+// Purpose: Approve a pending driver registration 
+// Middleware Chain:
+// 1. authenticate → Verify JWT token, set req.user
+// 2. authorizeRole('ADMIN') → Check if user.role === 'ADMIN'
+// 3. validate(approveDriverSchema) → Validate request body
+// 4. approveDriver → Handle request
+// Test in Postman: 
+// Method: POST
+// URL: http://localhost:5000/api/driver/admin/approve
+// Headers:
+//   {
+//     "Authorization": "Bearer <admin_token>",
+//     "Content-Type": "application/json"
+//   }  
+// Body (JSON):
+//   {
+//     "driverId": "60f5a3b8c2a1a4567890def1",
+//     "adminNotes": "All documents verified. Approved."   <--- "optional"
+//   }
+// bhai admin jab click karega approve pe to driver ka status pending se approved ho jayega aur driver ko ek email bhi jayega jisme likha hoga ki aapka registration approve ho gaya hai. Agar admin koi note add karta hai to wo note bhi email me include hoga.
+router.post(
+  "/admin/approve",
+  authenticate,
+  authorizeRole("ADMIN"),
+  validate(approveDriverSchema),  // ← Create this schema
+  approveDriver
+);
+
+
+
+// POST /api/driver/admin/reject
+// Access: Private (ADMIN only)
+// Purpose: Reject a pending driver registration  
+// Middleware Chain:
+// 1. authenticate → Verify JWT token, set req.user
+// 2. authorizeRole('ADMIN') → Check if user.role === 'ADMIN'
+// 3. validate(rejectDriverSchema) → Validate request body
+// 4. rejectDriver → Handle request
+// Test in Postman:   
+// Method: POST
+// URL: http://localhost:5000/api/driver/admin/reject
+// Headers:
+//   {
+//     "Authorization": "Bearer <admin_token>",
+//     "Content-Type": "application/json"
+//   }
+// Body (JSON):
+//   {
+//     "driverId": "60f5a3b8c2a1a4567890def1",
+//     "reason": "Documents are not clear. Please resubmit with clearer copies."
+//   }
+// jab admin reject pe click karega to driver ka status pending se rejected ho jayega aur driver ko ek email bhi jayega jisme likha hoga ki aapka registration reject ho gaya hai. Email me rejection reason bhi include hoga jo admin ne provide kiya hoga.
+
+router.post(
+  "/admin/reject",
+  authenticate,
+  authorizeRole("ADMIN"),
+  validate(rejectDriverSchema),  // ← Create this schema
+  rejectDriver
+);
+
+
+
 
 // ============================================
 // EXPORT ROUTER

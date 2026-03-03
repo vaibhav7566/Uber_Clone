@@ -57,7 +57,8 @@ const options = {
     './src/modules/auth/auth.controllers.js',
     './src/modules/profile/profile.controllers.js',
     './src/modules/driver/driver.controllers.js',
-    './src/modules/journey/journey.controllers.js'
+    './src/modules/journey/journey.controllers.js',
+    
   ]
 
 // apis: [

@@ -256,7 +256,7 @@ export const createProfile = async (req, res) => {
     res.status(201).json({
       success: true,
       data: driver,
-      message: "Driver profile created successfully",
+      message: "Driver registration submitted! Your application is pending admin approval.",
     });
   } catch (error) {
     // ============================================
@@ -694,6 +694,175 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to update driver profile",
+    });
+  }
+};
+
+
+
+
+// ============================================
+// ADMIN CONTROLLERS - Driver Approval
+// ============================================
+
+
+/**
+ * @swagger
+ * /api/driver/admin/pending:
+ *   get:
+ *     summary: Get all pending driver registrations
+ *     tags: [Driver]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of pending drivers
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+
+/**
+ * GET /api/driver/admin/pending
+ * Get all pending driver registrations for admin review
+ */
+export const getPendingDrivers = async (req, res) => {
+  try {
+    const drivers = await driverService.getPendingDrivers();
+
+    res.status(200).json({
+      success: true,
+      data: drivers,
+      count: drivers.length,
+      message: "Pending drivers fetched successfully",
+    });
+  } catch (error) {
+    console.error("Error in getPendingDrivers:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch pending drivers",
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /api/driver/admin/approve:
+ *   post:
+ *     summary: Approve a driver registration
+ *     tags: [Driver]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               driverId:
+ *                 type: string
+ *                 description: Driver document ID
+ *               adminNotes:
+ *                 type: string
+ *                 description: Optional approval notes
+ *     responses:
+ *       200:
+ *         description: Driver approved successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+
+/**
+ * POST /api/driver/admin/approve
+ * Approve a driver registration and update user role to DRIVER
+ */
+export const approveDriver = async (req, res) => {
+  try {
+    const { driverId, adminNotes } = req.body;
+    const adminId = req.user._id;
+
+    // Approve driver and update user role
+    const result = await driverService.approveDriver(
+      driverId,
+      adminId,
+      adminNotes
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: "Driver approved successfully. User role updated to DRIVER.",
+    });
+  } catch (error) {
+    console.error("Error in approveDriver:", error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to approve driver",
+    });
+  }
+};
+
+
+/**
+ * @swagger
+ * /api/driver/admin/reject:
+ *   post:
+ *     summary: Reject a driver registration
+ *     tags: [Driver]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               driverId:
+ *                 type: string
+ *                 description: Driver document ID
+ *               reason:
+ *                 type: string
+ *                 description: Rejection reason
+ *             required: [driverId, reason]
+ *     responses:
+ *       200:
+ *         description: Driver rejected successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+
+/**
+ * POST /api/driver/admin/reject
+ * Reject a driver registration with reason
+ */
+export const rejectDriver = async (req, res) => {
+  try {
+    const { driverId, reason } = req.body;
+    const adminId = req.user._id;
+
+    const result = await driverService.rejectDriver(driverId, adminId, reason);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: "Driver rejected successfully",
+    });
+  } catch (error) {
+    console.error("Error in rejectDriver:", error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to reject driver",
     });
   }
 };
