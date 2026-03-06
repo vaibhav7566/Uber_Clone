@@ -61,12 +61,14 @@ function DriverRegistration() {
       const response = await registerDriver(cleanedData);
       
       if (response.data.success) {
-        toast.success("✅ Driver registration successful!");
+        // Show approval message
+        toast.success("✅ Registration submitted! Awaiting admin approval...");
         
-        // Redirect to driver dashboard after 1.5 seconds
+        // Redirect to rider home after 2 seconds
+        // User can continue using the app while waiting for approval
         setTimeout(() => {
-          navigate("/driver/dashboard");
-        }, 1500);
+          navigate("/");  // Rider home page
+        }, 4000);
       }
     } catch (error) {
       // Skip error handling for 401 - response interceptor handles it

@@ -28,6 +28,7 @@ import Signup from "../pages/Signup";
 import Login from "../pages/Login";
 import RiderHome from "../pages/RiderHome";
 import DriverDashboard from "../pages/DriverDashboard";
+import AdminDashboard from "../pages/AdminDashboard";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
@@ -35,6 +36,7 @@ import Riding from "../components/Riding";
 import DriverRegistration from "../pages/DriverRegistration";
 
 export const router = createBrowserRouter([
+  // Signup route (only accessible to unauthenticated users)
   {
     path: "/",
     element: (
@@ -44,6 +46,7 @@ export const router = createBrowserRouter([
     ),
   },
 
+  // Login route (only accessible to unauthenticated users)
   {
     path: "/login",
     element: (
@@ -53,6 +56,7 @@ export const router = createBrowserRouter([
     ),
   },
 
+  // Rider home route (only accessible to authenticated users with RIDER role)
   {
     path: "/rider/home",
     element: (
@@ -62,30 +66,44 @@ export const router = createBrowserRouter([
     ),
   },
 
+  // Driver dashboard route (only accessible to authenticated users with DRIVER role)
   {
     path: "/driver/dashboard",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute requiredRole="DRIVER">
         <DriverDashboard />
       </ProtectedRoute>
     ),
   },
 
+  // Riding page (only accessible to authenticated users, both drivers and riders)
   {
     path: "/riding",
     element: (
       <ProtectedRoute>
         <Riding />
-      </ProtectedRoute> 
+      </ProtectedRoute>
     ),
   },
 
-   {
+  // Driver registration route (only accessible to authenticated users who are not yet drivers)
+  {
     path: "/driver/registration",
     element: (
       <ProtectedRoute>
         <DriverRegistration />
-      </ProtectedRoute> 
+      </ProtectedRoute>
     ),
-  }
+  },
+
+  // Admin dashboard route (only accessible to users with ADMIN role)
+  {
+    path: "/admin/dashboard",
+    element: (
+      <ProtectedRoute requiredRole="ADMIN">
+        <AdminDashboard />
+      </ProtectedRoute>
+    ),
+  },
+
 ]);
