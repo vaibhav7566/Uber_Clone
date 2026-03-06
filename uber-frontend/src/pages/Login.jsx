@@ -131,8 +131,10 @@ function Login() {
 
       if (user.role === "DRIVER") {
         navigate("/driver/dashboard", { replace: true });
-      } else {
+      } else if (user.role === "RIDER") {
         navigate("/rider/home", { replace: true });
+      } else if (user.role === "ADMIN") {
+        navigate("/admin/dashboard", { replace: true });
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");

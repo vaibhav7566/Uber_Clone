@@ -95,16 +95,47 @@ const Sidebar = ({ menuOpen, setMenuOpen }) => {
               Services
             </button>
 
-            <button 
-              onClick={() => {
-                setMenuOpen(false);
-                navigate("/driver/registration");
-              }} 
-              className="flex items-center gap-3 hover:text-gray-600"
-            >
-              <i className="ri-car-line text-xl"></i>
-              Earn by Driving
-            </button>
+            {/* ADMIN DASHBOARD - Only for ADMIN role */}
+            {/* {role === "ADMIN" && (
+              <button 
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/admin/dashboard");
+                }} 
+                className="flex items-center gap-3 hover:text-blue-600 text-blue-600"
+              >
+                <i className="ri-shield-admin-line text-xl"></i>
+                Admin Dashboard
+              </button>
+            )} */}
+
+            {/* DRIVER DASHBOARD - Only for DRIVER role */}
+            {/* {role === "DRIVER" && (
+              <button 
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/driver/dashboard");
+                }} 
+                className="flex items-center gap-3 hover:text-green-600 text-green-600"
+              >
+                <i className="ri-car-line text-xl"></i>
+                Driver Dashboard
+              </button>
+            )} */}
+
+            {/* EARN BY DRIVING - Only for RIDER role */}
+            {/* {role === "RIDER" && ( */}
+              <button 
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/driver/registration");
+                }} 
+                className="flex items-center gap-3 hover:text-gray-600"
+              >
+                <i className="ri-car-line text-xl"></i>
+                Earn by Driving
+              </button>
+            {/* )} */}
 
             <button className="flex items-center gap-3 text-red-500 hover:text-red-600 mt-auto">
               <i className="ri-logout-box-r-line text-xl"></i>
