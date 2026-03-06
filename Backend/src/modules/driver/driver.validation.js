@@ -311,14 +311,18 @@ export const updateDriverProfileSchema = z.object({
 
 // Validates data when admin approves or rejects driver applications
 export const approveDriverSchema = z.object({
-  driverId: z.string().min(1, "Driver ID is required"),
-  adminNotes: z.string().optional().nullable(),
+  body: z.object({
+    driverId: z.string().min(1, "Driver ID is required"),
+    adminNotes: z.string().optional().nullable(),
+  }),
 });
 
 export const rejectDriverSchema = z.object({
-  driverId: z.string().min(1, "Driver ID is required"),
-  reason: z
-    .string()
-    .min(5, "Rejection reason must be at least 5 characters")
-    .max(500, "Rejection reason cannot exceed 500 characters"),
+  body: z.object({
+    driverId: z.string().min(1, "Driver ID is required"),
+    reason: z
+      .string()
+      .min(5, "Rejection reason must be at least 5 characters")
+      .max(500, "Rejection reason cannot exceed 500 characters"),
+  }),
 });

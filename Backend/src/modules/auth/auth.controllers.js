@@ -190,7 +190,25 @@ async function loginController(req, res) {
   }
 }
 
-export { signupController, loginController };
+async function getCurrentUserController(req, res) {
+  try {
+    const userId = req.user.id; // From authenticate middleware
+    const user = await authService.getCurrentUser(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User fetched successfully",
+      data: user,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to fetch user",
+    });
+  }
+}
+
+export { signupController, loginController, getCurrentUserController };
 
 // Ye file controller layer hai jo HTTP request aur response handle karti hai.
 

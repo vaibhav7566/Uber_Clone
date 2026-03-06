@@ -794,6 +794,7 @@ export const approveDriver = async (req, res) => {
       adminNotes
     );
 
+    console.log("result in driver controller for approve driver:", result);
     res.status(200).json({
       success: true,
       data: result,

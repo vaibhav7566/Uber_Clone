@@ -74,6 +74,32 @@ class AuthService {
       throw error;
     }
   }
+
+  async getCurrentUser(userId) {
+    try {
+      const user = await User.findById(userId);
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      if (!user.isActive) {
+        throw new Error("Account is deactivated. Please contact support.");
+      }
+
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export const authService = new AuthService();

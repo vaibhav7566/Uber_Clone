@@ -1,4 +1,5 @@
 import { Driver } from "../model/driver.model.js";
+import User from "../model/user.model.js";
 
 // ============================================
 // DRIVER SERVICE - Business Logic Layer
