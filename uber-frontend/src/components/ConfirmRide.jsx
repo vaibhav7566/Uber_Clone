@@ -1,3 +1,4 @@
+// for rider to confirm the ride details before confirming the ride request to driver
 import React from "react";
 
 const ConfirmRide = (props) => {

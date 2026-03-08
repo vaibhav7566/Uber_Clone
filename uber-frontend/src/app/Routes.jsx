@@ -34,6 +34,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import Riding from "../components/Riding";
 import DriverRegistration from "../pages/DriverRegistration";
+import DriverRiding from "../pages/DriverRiding";
 
 export const router = createBrowserRouter([
   // Signup route (only accessible to unauthenticated users)
@@ -92,6 +93,16 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <DriverRegistration />
+      </ProtectedRoute>
+    ),
+  },
+
+  // Driver riding route (only accessible to authenticated users with DRIVER role)
+  {
+    path: "/driver/riding",
+    element: (
+      <ProtectedRoute requiredRole="DRIVER">
+        <DriverRiding />
       </ProtectedRoute>
     ),
   },
