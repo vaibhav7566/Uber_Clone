@@ -1,4 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice";
+import { toast } from "react-toastify";
 import DriverDetails from "../components/DriverDetails";
 import RidePopUp from "../components/RidePopUp";
 import { useState } from "react";
@@ -8,11 +11,20 @@ import gsap from "gsap";
 import ConfirmRidePopup from "../components/ConfirmRidePopup";
 
 function DriverDashboard() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
   const [ridePopupPanel, setRidePopupPanel] = useState(true);
   const ridePopupPanelRef = useRef(null);
   
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
   const confirmRidePopupPanelRef = useRef(null);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
 
   useGSAP(
     function () {
@@ -53,12 +65,12 @@ function DriverDashboard() {
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
           alt=""
         />
-        <Link
-          to="/driver/dashboard"
+        <button
+          onClick={handleLogout}
           className="h-10 w-10 bg-white flex items-center justify-center rounded-full"
         >
           <i className="text-lg font-medium ri-logout-box-r-line"></i>
-        </Link>
+        </button>
       </div>
 
       <div className="h-3/5">

@@ -1,28 +1,19 @@
-// for DriverDashboard.jsx
+import React from 'react'
+import { Link } from 'react-router-dom';
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-
-const ConfirmRidePopup = (props) => {
-  const [otp, setOtp] = useState("");
-
- const submitHandler = (e) => {
-    e.preventDefault();
-    // Handle OTP verification logic here
-  }
-
+const FinishRide = (props) => {
   return (
     <div>
-      {/* <h5
+      <h5
         className="p-1 text-center w-[93%] absolute top-0"
         onClick={() => {
-          props.setConfirmRidePopupPanel(false);
+          props.setFinishRidePanel(false);
         }}
       >
         <i className="text-3xl text-gray-300 ri-arrow-down-wide-line"></i>
-      </h5> */}
+      </h5>
       <h3 className="text-2xl font-semibold mb-6 flex items-center justify-center ">
-        Confirm this ride to Start
+        Finish this Ride
       </h3>
       <div className="flex items-center justify-between border-2 border-yellow-400 p-3 rounded-lg">
         <div className="flex items-center justify-start gap-3 ">
@@ -75,35 +66,29 @@ const ConfirmRidePopup = (props) => {
         
 
        <div className="mt-2 w-full">
-        
-        <form onSubmit={(e)=> {
-            submitHandler(e);
-        }}>
 
-       <input value={otp} onChange={(e) => setOtp(e.target.value)} type="text" placeholder="Enter OTP" className="bg-[#eee] border-2 border-blue-500 px-6 py-3 font-mono text-lg rounded-lg w-full mt-4"/>
-
-            <Link
-          to={"/driver/riding"}
+        <Link
+          to={"/get/payment"}
           onClick={() => {}}
-          className="w-full mt-5 bg-green-600 font-semibold text-white flex justify-center py-2 rounded-lg"
+          className="w-full mt-2 px-3 text-lg bg-green-600 font-semibold text-white  py-2 rounded-lg"
         >
-          Confirm
+          Get Payment
         </Link>
-
-        <button
-          onClick={() => {
-            props.setConfirmRidePopupPanel(false);
-            props.setRidePopupPanel(false);
-          }}
-          className="w-full mt-2  bg-red-500 font-semibold text-white  py-2 rounded-lg"
+        
+        
+            <Link
+          to={"/driver/dashboard"}
+          onClick={() => {}}
+          className="w-full mt-5 bg-green-600 text-lg font-semibold text-white flex justify-center py-3 rounded-lg"
         >
-          Cancel
-        </button>
-        </form>
+          Finish Ride
+        </Link>
+        <p className='mt-7 text-xs '>Click on finish ride if you have completed the payment.</p>
+      
        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ConfirmRidePopup;
+export default FinishRide
