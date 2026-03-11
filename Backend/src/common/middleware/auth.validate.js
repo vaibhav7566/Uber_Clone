@@ -23,9 +23,14 @@ export const validate = (schema) => {
     try {
       const result = await schema.parseAsync({
         body: req.body,
+        query: req.query,
+        params: req.params,
       });
 
-      req.body = result.body; // sanitized data
+      // Update sanitized data (only body can be reassigned)
+      if (result.body) req.body = result.body;
+      // query and params are read-only, validation is enough
+      
       next();
 
     } catch (error) {
@@ -34,7 +39,7 @@ export const validate = (schema) => {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
-        errors: error.errors || error.message,
+        errors: JSON.stringify(error.errors, null, 2) || error.message,
       });
     }
   };

@@ -3,11 +3,14 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import profileRoutes from "./modules/profile/profile.routes.js";
 import driverRoutes from "./modules/driver/driver.routes.js";
 import journeyRoutes from "./modules/journey/journey.routes.js";
+import mapRoutes from "./modules/maps/maps.routes.js";
+
 
 import swaggerUi from "swagger-ui-express"; //swagger-ui-express: A middleware that serves the generated Swagger documentation as an interactive web interface.
 import { swaggerSpec } from "./config/swagger.js";
 
 const app = express();
+
 
 // ============================================
 // CORS MIDDLEWARE
@@ -55,4 +58,6 @@ app.use("/api/auth", authRoutes); // this line mounts the authRoutes on the /api
 app.use("/api/profile", profileRoutes); // this line mounts the profileRoutes on the /api/profile path. This means that any requests made to /api/profile will be handled by the profileRoutes.
 app.use("/api/driver", driverRoutes); // this line mounts the driverRoutes on the /api/driver path. This means that any requests made to /api/driver will be handled by the driverRoutes. 
 app.use("/api/journey", journeyRoutes); // this line mounts the journeyRoutes on the /api/journey path. This means that any requests made to /api/journey will be handled by the journeyRoutes.
+app.use("/api/maps", mapRoutes); // this line mounts the mapRoutes on the /api/maps path. This means that any requests made to /api/maps will be handled by the mapRoutes.
+
 export default app;

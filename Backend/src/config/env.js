@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const requiredEnvVars = ["PORT", "AUTHOR_NAME","MONGODB_URI","JWT_SECRET","JWT_EXPIRES_IN","ENCRYPTION_KEY"];
+const requiredEnvVars = ["PORT", "AUTHOR_NAME","MONGODB_URI","JWT_SECRET","JWT_EXPIRES_IN","ENCRYPTION_KEY","GOOGLE_MAPS_API_KEY"];
 
 requiredEnvVars.forEach((envVar) => {
   if (!process.env[envVar]) {
@@ -17,4 +17,5 @@ export const env = {
   MONGODB_URI: process.env.MONGODB_URI,
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
 };
