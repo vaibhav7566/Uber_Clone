@@ -3,32 +3,32 @@ import { z } from "zod";
 // ============================================
 // MAPS VALIDATION SCHEMAS
 // ============================================
-// Validates request data for Google Maps API calls
+// Validates request data for Mapbox API calls
 
 // ============================================
 // ADDRESS SUGGESTIONS SCHEMA
 // ============================================
-// Validates query params for Places Autocomplete API
+// Validates query params for Geocoding Autocomplete API
 export const addressSuggestionsSchema = z.object({
-  query: z.object({
-    input: z
-      .string({
-        required_error: "Search input is required",
-      })
-      .min(1, "Search input cannot be empty")
-      .trim(),
-
-    sessionToken: z
-      .string()
-      .optional()
-      .describe("Session token for billing purposes"),
-  }),
+  query: z
+    .object({
+      input: z.string().trim().optional(),
+      address: z.string().trim().optional(),
+      query: z.string().trim().optional(),
+    })
+    .refine(
+      (value) => Boolean(value.input || value.address || value.query),
+      {
+        message: "Search input is required",
+        path: ["input"],
+      }
+    ),
 });
 
 // ============================================
 // COORDINATES SCHEMA
 // ============================================
-// Validates query params for Geocoding API
+// Validates query params for Forward Geocoding API
 export const coordinatesSchema = z.object({
   query: z.object({
     address: z
@@ -43,7 +43,7 @@ export const coordinatesSchema = z.object({
 // ============================================
 // DISTANCE & TIME SCHEMA
 // ============================================
-// Validates request body for Distance Matrix API
+// Validates request body for Directions API
 export const distanceTimeSchema = z.object({
   body: z.object({
     origin: z

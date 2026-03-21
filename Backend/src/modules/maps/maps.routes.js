@@ -24,15 +24,15 @@ const router = express.Router();
 // Base path: /api/maps (mounted in app.js)
 // All routes require authentication
 //
-// Google Maps APIs Integration:
-// 1️⃣ Places API → Location suggestions
+// Mapbox APIs Integration:
+// 1️⃣ Geocoding API → Location suggestions
 // 2️⃣ Geocoding API → Address ↔ Coordinates
-// 3️⃣ Directions API → Route + Distance
-// 4️⃣ Distance Matrix API → Fare calculation
-// 5️⃣ Maps JavaScript API → Frontend map render
+// 3️⃣ Directions API → Route + Distance + Time
+// 4️⃣ Custom pricing logic → Fare calculation
+// 5️⃣ Mapbox GL JS / React Mapbox GL → Frontend map render
 
 // ============================================
-// GET ADDRESS SUGGESTIONS (Places API)
+// GET ADDRESS SUGGESTIONS (Geocoding Autocomplete)
 // ============================================
 // GET /api/maps/suggestions?input=kolkata
 // Access: Private (Authenticated users)
@@ -45,11 +45,89 @@ const router = express.Router();
 //
 // Test in Postman:
 // Method: GET
-// URL: http://localhost:5000/api/maps/suggestions?input=kolkata&sessionToken=abc123
+// URL: http://localhost:5000/api/maps/suggestions?input=kolkata
 // Headers:
 //   {
 //     "Authorization": "Bearer <token>"
 //   }
+
+
+// {
+//     "success": true,
+//     "message": "Address suggestions fetched successfully",
+//     "data": [
+//         {
+//             "placeId": "locality.236530283",
+//             "description": "Awadhpuri, Bhopal, Bhopal, Madhya Pradesh, India",
+//             "mainText": "Awadhpuri",
+//             "secondaryText": "Bhopal, Bhopal, Madhya Pradesh, India",
+//             "coordinates": {
+//                 "lat": 23.229387,
+//                 "lng": 77.4858
+//             }
+//         },
+//         {
+//             "placeId": "address.6481036084346654",
+//             "description": "Vallabh nagar awadhpuri ، 462022 Bhopal، India",
+//             "mainText": "Vallabh nagar awadhpuri",
+//             "secondaryText": "Vallabh nagar awadhpuri ، 462022 Bhopal، India",
+//             "coordinates": {
+//                 "lat": 23.227904,
+//                 "lng": 77.490136
+//             }
+//         },
+//         {
+//             "placeId": "address.575979964590810",
+//             "description": "Awadhpuri Rd ، 462023 Bhopal، India",
+//             "mainText": "Awadhpuri Rd",
+//             "secondaryText": "Awadhpuri Rd ، 462023 Bhopal، India",
+//             "coordinates": {
+//                 "lat": 23.232325,
+//                 "lng": 77.449311
+//             }
+//         },
+//         {
+//             "placeId": "address.7280512744983986",
+//             "description": "Bhopal Bypass Road ، 462022 Bhopal، India",
+//             "mainText": "Bhopal Bypass Road",
+//             "secondaryText": "Bhopal Bypass Road ، 462022 Bhopal، India",
+//             "coordinates": {
+//                 "lat": 23.252634,
+//                 "lng": 77.511114
+//             }
+//         },
+//         {
+//             "placeId": "locality.666126955",
+//             "description": "Bhopalpura, Vijainagar, Anupgarh, Rajasthan, India",
+//             "mainText": "Bhopalpura",
+//             "secondaryText": "Vijainagar, Anupgarh, Rajasthan, India",
+//             "coordinates": {
+//                 "lat": 29.005093,
+//                 "lng": 73.56606
+//             }
+//         },
+//         {
+//             "placeId": "address.862183103647808",
+//             "description": "Near Bhopal ، 462026 Bhopal، India",
+//             "mainText": "Near Bhopal",
+//             "secondaryText": "Near Bhopal ، 462026 Bhopal، India",
+//             "coordinates": {
+//                 "lat": 23.207311,
+//                 "lng": 77.456276
+//             }
+//         },
+//         {
+//             "placeId": "address.8314858118379190",
+//             "description": "Opp. Bhopal ، 462016 Bhopal، India",
+//             "mainText": "Opp. Bhopal",
+//             "secondaryText": "Opp. Bhopal ، 462016 Bhopal، India",
+//             "coordinates": {
+//                 "lat": 23.2276,
+//                 "lng": 77.434553
+//             }
+//         }
+//     ]
+// }
 router.get(
   "/suggestions",
   authenticate,
@@ -58,7 +136,7 @@ router.get(
 );
 
 // ============================================
-// GET COORDINATES (Geocoding API)
+// GET COORDINATES (Forward Geocoding)
 // ============================================
 // GET /api/maps/coordinates?address=Kolkata,India
 // Access: Private (Authenticated users)
@@ -84,7 +162,7 @@ router.get(
 );
 
 // ============================================
-// GET DISTANCE & TIME (Distance Matrix API)
+// GET DISTANCE & TIME (Directions API)
 // ============================================
 // POST /api/maps/distance-time
 // Access: Private (Authenticated users)
@@ -105,8 +183,8 @@ router.get(
 //   }
 // Body (JSON):
 //   {
-//     "origin": "22.5726,88.3639",
-//     "destination": "22.5744,88.3629"
+//     "origin": "Bhopal,India",
+//     "destination": "Indore,India"
 //   }
 router.post(
   "/distance-time",
@@ -116,7 +194,7 @@ router.post(
 );
 
 // ============================================
-// CALCULATE FARE (Distance Matrix + Pricing Logic)
+// CALCULATE FARE (Directions + Pricing Logic)
 // ============================================
 // POST /api/maps/calculate-fare
 // Access: Private (Authenticated users)

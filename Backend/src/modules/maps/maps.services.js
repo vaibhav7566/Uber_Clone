@@ -9,9 +9,166 @@ import { env } from "../../config/env.js";
 
 class MapsService {
   constructor() {
-    // Google Maps API Key from environment variables
-    this.apiKey = env.GOOGLE_MAPS_API_KEY;
-    this.baseUrl = "https://maps.googleapis.com/maps/api";
+    this.apiKey = env.MAPBOX_ACCESS_TOKEN;
+    this.baseUrl = "https://api.mapbox.com";
+  }
+
+  formatDistance(distanceInMeters = 0) {
+    if (distanceInMeters < 1000) {
+      return `${Math.round(distanceInMeters)} m`;
+    }
+
+    return `${(distanceInMeters / 1000).toFixed(1)} km`;
+  }
+
+  formatDuration(durationInSeconds = 0) {
+    const minutes = Math.round(durationInSeconds / 60);
+
+    if (minutes < 60) {
+      return `${minutes} mins`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (remainingMinutes === 0) {
+      return `${hours} hr`;
+    }
+
+    return `${hours} hr ${remainingMinutes} mins`;
+  }
+
+  parseLatLng(location) {
+    if (typeof location !== "string") {
+      return null;
+    }
+
+    const coordinateRegex =
+      /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
+    const match = location.match(coordinateRegex);
+
+    if (!match) {
+      return null;
+    }
+
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+
+    const isValidLat = lat >= -90 && lat <= 90;
+    const isValidLng = lng >= -180 && lng <= 180;
+
+    if (!isValidLat || !isValidLng) {
+      return null;
+    }
+
+    return { lat, lng };
+  }
+
+  async geocodeAddress(address, options = {}) {
+    const url = `${this.baseUrl}/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json`;
+
+    const params = {
+      access_token: this.apiKey,
+      autocomplete: options.autocomplete ?? false,
+      limit: options.limit ?? 1,
+      language: options.language ?? "en",
+    };
+
+    if (options.country !== null) {
+      params.country = options.country ?? "IN";
+    }
+
+    const response = await axios.get(url, {
+      params,
+    });
+
+    return response.data;
+  }
+
+  async resolveLocation(location) {
+    if (typeof location !== "string") {
+      throw new Error("Origin and destination must be strings");
+    }
+
+    const cleanedLocation = location.trim();
+
+    if (!cleanedLocation) {
+      throw new Error("Origin and destination cannot be empty");
+    }
+
+    const parsed = this.parseLatLng(cleanedLocation);
+
+    if (parsed) {
+      return parsed;
+    }
+
+    const coordinates = await this.getCoordinates(cleanedLocation);
+
+    return {
+      lat: coordinates.lat,
+      lng: coordinates.lng,
+    };
+  }
+
+  async fetchDirections(origin, destination, waypoints = []) {
+    const originCoordinate = await this.resolveLocation(origin);
+    const destinationCoordinate = await this.resolveLocation(destination);
+
+    const waypointCoordinates = await Promise.all(
+      waypoints.map((waypoint) => this.resolveLocation(waypoint))
+    );
+
+    const coordinatePath = [
+      originCoordinate,
+      ...waypointCoordinates,
+      destinationCoordinate,
+    ]
+      .map((point) => `${point.lng},${point.lat}`)
+      .join(";");
+
+    const url = `${this.baseUrl}/directions/v5/mapbox/driving/${coordinatePath}`;
+    const response = await axios.get(url, {
+      params: {
+        access_token: this.apiKey,
+        alternatives: false,
+        geometries: "geojson",
+        overview: "full",
+        steps: true,
+      },
+    });
+
+    const route = response.data?.routes?.[0];
+
+    if (!route) {
+      throw new Error("No route found for the given points");
+    }
+
+    return route;
+  }
+
+  getRouteBounds(geometry) {
+    const coordinates = geometry?.coordinates ?? [];
+
+    if (!coordinates.length) {
+      return null;
+    }
+
+    let minLat = coordinates[0][1];
+    let maxLat = coordinates[0][1];
+    let minLng = coordinates[0][0];
+    let maxLng = coordinates[0][0];
+
+    for (const [lng, lat] of coordinates) {
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLng = Math.min(minLng, lng);
+      maxLng = Math.max(maxLng, lng);
+    }
+
+    return {
+      northeast: { lat: maxLat, lng: maxLng },
+      southwest: { lat: minLat, lng: minLng },
+    };
   }
 
   // ============================================
@@ -26,31 +183,39 @@ class MapsService {
   //
   // Parameters:
   //   - input: String - User's search query
-  //   - sessionToken: String - Session token for billing
   //
   // Returns: Array of address suggestions
-  async getAddressSuggestions(input, sessionToken) {
+  async getAddressSuggestions(input) {
     try {
-      // TODO: Implement Google Places Autocomplete API call
-      // const url = `${this.baseUrl}/place/autocomplete/json?input=${input}&key=${this.apiKey}&sessiontoken=${sessionToken}`;
-      // const response = await fetch(url);
-      // const data = await response.json();
+      const cleanedInput = input.trim();
 
-      // Dummy data for now
-      const suggestions = [
-        {
-          placeId: "ChIJZ_YISduC4joRM0Ar6I8I",
-          description: `${input}, Kolkata, West Bengal, India`,
-          mainText: input,
-          secondaryText: "Kolkata, West Bengal, India",
+      const url = `${this.baseUrl}/geocoding/v5/mapbox.places/${encodeURIComponent(cleanedInput)}.json`;
+      const params = {
+        access_token: this.apiKey,
+        autocomplete: true,
+        limit: 8,
+        language: "en",
+        country: "IN",
+        fuzzyMatch: true,
+        routing: true,
+        types: "poi,address,place,locality,neighborhood",
+      };
+
+      const response = await axios.get(url, { params });
+      const data = response.data;
+
+      const suggestions = (data.features || []).map((feature) => ({
+        placeId: feature.id,
+        description: feature.place_name,
+        mainText: feature.text || feature.place_name,
+        secondaryText: feature.place_name
+          ? feature.place_name.replace(`${feature.text}, `, "")
+          : "",
+        coordinates: {
+          lat: feature.center[1],
+          lng: feature.center[0],
         },
-        {
-          placeId: "ChIJZ_YISduC4joRM0Ar6I8J",
-          description: `${input} Park, Kolkata, India`,
-          mainText: `${input} Park`,
-          secondaryText: "Kolkata, India",
-        },
-      ];
+      }));
 
       return suggestions;
     } catch (error) {
@@ -74,21 +239,32 @@ class MapsService {
   // Returns: Object with lat, lng, formatted_address
   async getCoordinates(address) {
     try {
-      const url = `${this.baseUrl}/geocode/json?address=${encodeURIComponent(address)}&key=${this.apiKey}`;
-      const response = await axios.get(url);
-      const data = response.data;
+      const cleanedAddress = address.trim();
 
-      if (data.results && data.results.length > 0) {
-        const result = data.results[0];
-        const coordinates = {
-          lat: result.geometry.location.lat,
-          lng: result.geometry.location.lng,
-          formattedAddress: result.formatted_address,
-        };
-        return coordinates;
-      } else {
-        throw new Error('No results found for the given address');
+      let data = await this.geocodeAddress(cleanedAddress, {
+        autocomplete: false,
+        limit: 1,
+        country: "IN",
+      });
+
+      if (!data.features || data.features.length === 0) {
+        data = await this.geocodeAddress(cleanedAddress, {
+          autocomplete: false,
+          limit: 1,
+          country: null,
+        });
       }
+
+      if (data.features && data.features.length > 0) {
+        const result = data.features[0];
+        return {
+          lat: result.center[1],
+          lng: result.center[0],
+          formattedAddress: result.place_name,
+        };
+      }
+
+      throw new Error("No results found for the given address");
     } catch (error) {
       throw new Error(`Failed to get coordinates: ${error.message}`);
     }
@@ -111,24 +287,18 @@ class MapsService {
   // Returns: Object with distance, duration
   async getDistanceTime(origin, destination) {
     try {
-      // TODO: Implement Google Distance Matrix API call
-      // const url = `${this.baseUrl}/distancematrix/json?origins=${origin}&destinations=${destination}&key=${this.apiKey}`;
-      // const response = await fetch(url);
-      // const data = await response.json();
+      const route = await this.fetchDirections(origin, destination);
 
-      // Dummy data for now
-      const result = {
+      return {
         distance: {
-          text: "5.2 km",
-          value: 5200, // meters
+          text: this.formatDistance(route.distance),
+          value: Math.round(route.distance),
         },
         duration: {
-          text: "15 mins",
-          value: 900, // seconds
+          text: this.formatDuration(route.duration),
+          value: Math.round(route.duration),
         },
       };
-
-      return result;
     } catch (error) {
       throw new Error(`Failed to calculate distance and time: ${error.message}`);
     }
@@ -239,44 +409,36 @@ class MapsService {
   // Returns: Object with route details and polyline
   async getRoute(origin, destination, waypoints = []) {
     try {
-      // TODO: Implement Google Directions API call
-      // let url = `${this.baseUrl}/directions/json?origin=${origin}&destination=${destination}&key=${this.apiKey}`;
-      // if (waypoints.length > 0) {
-      //   url += `&waypoints=${waypoints.join('|')}`;
-      // }
-      // const response = await fetch(url);
-      // const data = await response.json();
+      const route = await this.fetchDirections(origin, destination, waypoints);
+      const steps = (route.legs || []).flatMap((leg) =>
+        (leg.steps || []).map((step) => ({
+          distance: {
+            text: this.formatDistance(step.distance),
+            value: Math.round(step.distance),
+          },
+          duration: {
+            text: this.formatDuration(step.duration),
+            value: Math.round(step.duration),
+          },
+          instruction:
+            step.maneuver?.instruction || step.name || "Continue straight",
+        }))
+      );
 
-      // Dummy data for now
-      const route = {
+      return {
         distance: {
-          text: "5.2 km",
-          value: 5200,
+          text: this.formatDistance(route.distance),
+          value: Math.round(route.distance),
         },
         duration: {
-          text: "15 mins",
-          value: 900,
+          text: this.formatDuration(route.duration),
+          value: Math.round(route.duration),
         },
-        polyline: "dummy_encoded_polyline_string",
-        steps: [
-          {
-            distance: { text: "0.5 km", value: 500 },
-            duration: { text: "2 mins", value: 120 },
-            instruction: "Head north on Main St",
-          },
-          {
-            distance: { text: "2.0 km", value: 2000 },
-            duration: { text: "5 mins", value: 300 },
-            instruction: "Turn right onto Park Ave",
-          },
-        ],
-        bounds: {
-          northeast: { lat: 22.5744, lng: 88.3639 },
-          southwest: { lat: 22.5726, lng: 88.3629 },
-        },
+        polyline: route.geometry,
+        geometry: route.geometry,
+        steps,
+        bounds: this.getRouteBounds(route.geometry),
       };
-
-      return route;
     } catch (error) {
       throw new Error(`Failed to get route: ${error.message}`);
     }

@@ -8,22 +8,20 @@ import { mapsService } from "./maps.services.js";
  * @swagger
  * tags:
  *   name: Maps
- *   description: Google Maps API integration for location services
+ *   description: Mapbox API integration for location services
  */
 
 // ============================================
 // GET ADDRESS SUGGESTIONS
 // ============================================
-// Uses Google Places Autocomplete API
+// Uses Mapbox Geocoding Autocomplete
 // Returns location predictions as user types
 async function getAddressSuggestions(req, res) {
   try {
-    const { input, sessionToken } = req.query;
+    const searchInput =
+      req.query.input || req.query.address || req.query.query || "";
 
-    const suggestions = await mapsService.getAddressSuggestions(
-      input,
-      sessionToken
-    );
+    const suggestions = await mapsService.getAddressSuggestions(searchInput);
 
     return res.status(200).json({
       success: true,
@@ -42,7 +40,7 @@ async function getAddressSuggestions(req, res) {
 // ============================================
 // GET COORDINATES FROM ADDRESS
 // ============================================
-// Uses Google Geocoding API
+// Uses Mapbox Geocoding API
 // Converts address string to lat/lng coordinates
 async function getCoordinates(req, res) {
   try {
@@ -67,7 +65,7 @@ async function getCoordinates(req, res) {
 // ============================================
 // GET DISTANCE AND TIME
 // ============================================
-// Uses Google Distance Matrix API
+// Uses Mapbox Directions API
 // Returns distance and duration between two points
 async function getDistanceTime(req, res) {
   try {
@@ -92,7 +90,7 @@ async function getDistanceTime(req, res) {
 // ============================================
 // CALCULATE FARE
 // ============================================
-// Uses Distance Matrix API + Custom fare logic
+// Uses Directions API + Custom fare logic
 // Returns fare breakdown for different vehicle types
 async function calculateFare(req, res) {
   try {
@@ -121,7 +119,7 @@ async function calculateFare(req, res) {
 // ============================================
 // GET ROUTE
 // ============================================
-// Uses Google Directions API
+// Uses Mapbox Directions API
 // Returns detailed route with polyline for map rendering
 async function getRoute(req, res) {
   try {
