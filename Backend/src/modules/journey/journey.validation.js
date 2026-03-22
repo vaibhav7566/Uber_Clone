@@ -115,31 +115,33 @@ export const completeJourneySchema = z.object({
         // ============================================
         actualFare: z
             .number({
-                required_error: 'Actual fare is required',
                 invalid_type_error: 'Actual fare must be a number'
             })
             .positive('Actual fare must be greater than 0')
-            .max(100000, 'Actual fare seems unrealistically high'),
+            .max(100000, 'Actual fare seems unrealistically high')
+            .optional(),
 
         // ============================================
         // DISTANCE
         // ============================================
         distance: z
             .number({
-                required_error: 'Distance is required'
+                invalid_type_error: 'Distance must be a number'
             })
             .positive('Distance must be greater than 0')
-            .max(500, 'Distance cannot exceed 500 km'),
+            .max(500, 'Distance cannot exceed 500 km')
+            .optional(),
 
         // ============================================
         // DURATION (in minutes)
         // ============================================
         duration: z
             .number({
-                required_error: 'Duration is required'
+                invalid_type_error: 'Duration must be a number'
             })
             .positive('Duration must be greater than 0')
             .max(1440, 'Duration cannot exceed 24 hours')
+            .optional()
     })
 });
 

@@ -351,8 +351,8 @@ class MapsService {
           perMin: 1,
         },
         ELECTRIC_SCOOTER: {
-          baseFare: 35,
-          perKm: 9,
+          baseFare: 30,
+          perKm: 8,
           perMin: 1.5,
         },
       };
@@ -375,7 +375,9 @@ class MapsService {
       return {
         vehicleType,
         distance: distance.text,
+        distanceValue: distance.value,
         duration: duration.text,
+        durationValue: duration.value,
         breakdown: {
           baseFare: vehiclePricing.baseFare,
           distanceFare: Math.round(distanceFare * 100) / 100,

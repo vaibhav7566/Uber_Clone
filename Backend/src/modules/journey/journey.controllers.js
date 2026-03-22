@@ -374,24 +374,21 @@ export const updateJourneyStatus = async (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - actualFare
- *               - distance
- *               - duration
  *             properties:
  *               actualFare:
  *                 type: number
  *                 minimum: 1
  *                 example: 245
+ *                 description: Optional. If omitted, service uses stored estimated fare snapshot.
  *               distance:
  *                 type: number
  *                 minimum: 0
- *                 description: Distance in kilometres
+ *                 description: Optional. Distance in kilometres. If omitted, stored snapshot is used.
  *                 example: 12.5
  *               duration:
  *                 type: number
  *                 minimum: 0
- *                 description: Duration in minutes
+ *                 description: Optional. Duration in minutes. If omitted, stored snapshot is used.
  *                 example: 28
  *     responses:
  *       200:

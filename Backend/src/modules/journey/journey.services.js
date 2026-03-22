@@ -2,6 +2,7 @@ import { Ride } from '../model/journey.model.js';
 import  User  from '../model/user.model.js';
 import { Driver } from '../model/driver.model.js';
 import QRCode from 'qrcode';
+import { mapsService } from '../maps/maps.services.js';
 
 // ============================================
 // JOURNEY SERVICE - Business Logic Layer
@@ -35,12 +36,19 @@ class JourneyService {
             throw new Error('Rider not found');
         }
 
-        // Calculate estimated fare (simple calculation: base + distance-based)
-        const estimatedFare = this.calculateEstimatedFare(
-            journeyData.pickupCoordinates,
-            journeyData.dropoffCoordinates,
+        const origin = this.toLatLngString(journeyData.pickupCoordinates);
+        const destination = this.toLatLngString(journeyData.dropoffCoordinates);
+
+        // Single source of truth for quote pricing: mapsService
+        const fareQuote = await mapsService.calculateFare(
+            origin,
+            destination,
             journeyData.vehicleType
         );
+
+        const estimatedFare = fareQuote.breakdown.total;
+        const distanceInKm = Math.round((fareQuote.distanceValue / 1000) * 100) / 100;
+        const durationInMin = Math.round((fareQuote.durationValue / 60) * 100) / 100;
 
         // Create journey
         const journey = new Ride({
@@ -61,6 +69,8 @@ class JourneyService {
                 }
             },
             estimatedFare,
+            distance: distanceInKm,
+            duration: durationInMin,
             paymentMethod: journeyData.paymentMethod,
             status: 'REQUESTED'
         });
@@ -69,6 +79,20 @@ class JourneyService {
         await journey.populate('riderId', 'name email phone');
 
         return this.formatJourneyResponse(journey);
+    }
+
+    toLatLngString(coords) {
+        if (!Array.isArray(coords) || coords.length !== 2) {
+            throw new Error('Coordinates must be [longitude, latitude]');
+        }
+
+        const [lng, lat] = coords;
+
+        if (typeof lat !== 'number' || typeof lng !== 'number') {
+            throw new Error('Coordinates must contain valid numbers');
+        }
+
+        return `${lat},${lng}`;
     }
 
     // ============================================
@@ -218,12 +242,20 @@ class JourneyService {
             throw new Error('Journey must be started before completion');
         }
 
+        const finalActualFare = completionData.actualFare ?? journey.actualFare ?? journey.estimatedFare;
+        const finalDistance = completionData.distance ?? journey.distance;
+        const finalDuration = completionData.duration ?? journey.duration;
+
+        if (!finalActualFare) {
+            throw new Error('Unable to complete journey without fare data');
+        }
+
         // Update journey
         journey.status = 'COMPLETED';
         journey.completedAt = new Date();
-        journey.actualFare = completionData.actualFare;
-        journey.distance = completionData.distance;
-        journey.duration = completionData.duration;
+        journey.actualFare = finalActualFare;
+        journey.distance = finalDistance;
+        journey.duration = finalDuration;
         journey.paymentStatus = 'COMPLETED';
 
         await journey.save();

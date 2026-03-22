@@ -139,7 +139,8 @@ router.patch(
 // POST /api/journey/:journeyId/complete
 // Access: Private (Journey driver only)
 // Purpose: Driver completes the journey
-// request body: { actualFare, distance, duration }  --->> 👉 Driver app is calculating OR receiving from frontend logic.
+// request body (optional): { actualFare, distance, duration }
+// If omitted, backend uses stored journey snapshot (estimatedFare, distance, duration).
 //
 router.post(
   "/:journeyId/complete",
