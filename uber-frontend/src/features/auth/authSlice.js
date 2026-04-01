@@ -1,5 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+// try {
+//   localStorage.removeItem("user");
+// } catch (error) {
+//   void error;
+// }
 
 const initialState = {
   user: null,

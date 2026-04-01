@@ -94,17 +94,16 @@ async function getDistanceTime(req, res) {
 // Returns fare breakdown for different vehicle types
 async function calculateFare(req, res) {
   try {
-    const { origin, destination, vehicleType } = req.body;
+    const { origin, destination } = req.query;
 
-    const fareDetails = await mapsService.calculateFare(
+    const fareDetails = await mapsService.calculateFareForAllVehicles(
       origin,
-      destination,
-      vehicleType
+      destination
     );
 
     return res.status(200).json({
       success: true,
-      message: "Fare calculated successfully",
+      message: "Fare calculated successfully for all vehicles",
       data: fareDetails,
     });
   } catch (error) {

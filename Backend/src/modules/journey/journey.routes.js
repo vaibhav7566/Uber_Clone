@@ -52,6 +52,16 @@ const router = express.Router();
 // POST /api/journey/create
 // Access: Private (Any rider)
 // Purpose: Rider creates a new journey request
+// POST link: http://localhost:5000/api/journey/create
+// request body: { pickupAddress, pickupCoordinates, dropoffAddress, dropoffCoordinates, vehicleType }
+// dummy request body example: {
+//     "pickupAddress": "123 Main St, Cityville",
+//     "pickupCoordinates": [88.3639, 22.5726],
+//     "dropoffAddress" : "456 Market St, Townsville",
+//     "dropoffCoordinates": [88.3640, 22.5727],
+//     "vehicleType": "CAR"
+// } 
+//    }
 router.post(
   "/create",
   authenticate, // Verify JWT token

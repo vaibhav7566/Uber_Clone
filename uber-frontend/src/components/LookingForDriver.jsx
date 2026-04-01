@@ -1,6 +1,18 @@
 import React from 'react'
+import { useSelector } from 'react-redux';
 
 const LookingForDriver = (props) => {
+  const finalRide = useSelector((state) => state.currentRide.currentRide);
+
+  const pickupAddress = finalRide?.pickup?.address || props.pickupLocation || "-";
+  const dropoffAddress = finalRide?.dropoff?.address || props.destinationLocation || "-";
+  const paymentMethod = finalRide?.paymentMethod || "-";
+  const estimatedFare =
+    typeof finalRide?.estimatedFare === "number"
+      ? `₹${finalRide.estimatedFare.toFixed(2)}`
+      : null;
+  const distanceText =
+    typeof finalRide?.distance === "number" ? `${finalRide.distance} km` : "-";
   return (
     <div>
       <h5
@@ -23,27 +35,36 @@ const LookingForDriver = (props) => {
           <div className="flex items-center gap-5 p-3 border-b-2 border-gray-200">
             <i className="ri-map-pin-fill text-lg "></i>
             <div>
-              <h3 className="font-medium text-lg">562/11-A</h3>
+              <h3 className="font-medium text-lg">Pickup</h3>
               <p className="text-small -mt-1 text-gray-600 ">
-                Kankariya Talab Ahmedabad
+                  {pickupAddress}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3 border-b-2 border-gray-200">
             <i className="ri-stop-fill text-lg"></i>
             <div>
-              <h3 className="font-medium text-lg">562/11-A</h3>
+              <h3 className="font-medium text-lg">Destination</h3>
               <p className="text-small -mt-1 text-gray-600 ">
-                Kankariya Talab Ahmedabad
+               {dropoffAddress}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-5 p-3 border-b-2 border-gray-200">
+            <i className="ri-route-fill text-lg"></i>
+            <div>
+              <h3 className="font-medium text-lg">Distance</h3>
+              <p className="text-small -mt-1 text-gray-600 ">
+                {distanceText}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3 border-b-2 border-gray-200">
             <i className="ri-money-rupee-circle-fill"></i>
             <div>
-              <h3 className="font-medium text-lg">Select Payment Option</h3>
+              <h3 className="font-medium text-lg">Selected Payment Option</h3>
               <button className="text-small -mt-1 text-gray-600 ">
-                bkejsbfkndn
+                {estimatedFare ? `${paymentMethod} • ${estimatedFare}` : paymentMethod}
               </button>
             </div>
           </div>

@@ -11,6 +11,15 @@ class MapsService {
   constructor() {
     this.apiKey = env.MAPBOX_ACCESS_TOKEN;
     this.baseUrl = "https://api.mapbox.com";
+    this.routeCache = new Map();
+    this.routeCacheTtlMs = 30 * 1000;
+  }
+
+  // rountTo - 👉 roundTo() number ko round karta hai (decimal fix karta hai)
+  //             👉 matlab: 2 decimal tak value clean bana deta hai
+  roundTo(value, digits = 2) {
+    const factor = 10 ** digits;
+    return Math.round((value + Number.EPSILON) * factor) / factor;
   }
 
   formatDistance(distanceInMeters = 0) {
@@ -43,8 +52,7 @@ class MapsService {
       return null;
     }
 
-    const coordinateRegex =
-      /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
+    const coordinateRegex = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
     const match = location.match(coordinateRegex);
 
     if (!match) {
@@ -115,7 +123,7 @@ class MapsService {
     const destinationCoordinate = await this.resolveLocation(destination);
 
     const waypointCoordinates = await Promise.all(
-      waypoints.map((waypoint) => this.resolveLocation(waypoint))
+      waypoints.map((waypoint) => this.resolveLocation(waypoint)),
     );
 
     const coordinatePath = [
@@ -125,6 +133,16 @@ class MapsService {
     ]
       .map((point) => `${point.lng},${point.lat}`)
       .join(";");
+
+    const cacheKey = `driving:${coordinatePath}`;
+    const cachedRoute = this.routeCache.get(cacheKey);
+
+    if (
+      cachedRoute &&
+      Date.now() - cachedRoute.timestamp < this.routeCacheTtlMs
+    ) {
+      return cachedRoute.route;
+    }
 
     const url = `${this.baseUrl}/directions/v5/mapbox/driving/${coordinatePath}`;
     const response = await axios.get(url, {
@@ -142,6 +160,11 @@ class MapsService {
     if (!route) {
       throw new Error("No route found for the given points");
     }
+
+    this.routeCache.set(cacheKey, {
+      route,
+      timestamp: Date.now(),
+    });
 
     return route;
   }
@@ -300,7 +323,9 @@ class MapsService {
         },
       };
     } catch (error) {
-      throw new Error(`Failed to calculate distance and time: ${error.message}`);
+      throw new Error(
+        `Failed to calculate distance and time: ${error.message}`,
+      );
     }
   }
 
@@ -320,76 +345,88 @@ class MapsService {
   //   - vehicleType: String - CAR, BIKE, AUTO, etc.
   //
   // Returns: Object with fare breakdown
-  async calculateFare(origin, destination, vehicleType = "CAR") {
+  getPricingConfig() {
+    return {
+      CAR: { baseFare: 50, perKm: 10, perMin: 3 },
+      BIKE: { baseFare: 30, perKm: 6, perMin: 1 },
+      AUTO: { baseFare: 30, perKm: 8, perMin: 2 },
+      E_RICKSHAW: { baseFare: 15, perKm: 5, perMin: 1 },
+      ELECTRIC_SCOOTER: { baseFare: 20, perKm: 7, perMin: 1.2 },
+    };
+  }
+
+  buildFareQuote(distance, duration, vehicleType) {
+    const pricing = this.getPricingConfig();
+    const vehiclePricing = pricing[vehicleType] || pricing.CAR;
+
+    const distanceKm = this.roundTo(distance.value / 1000, 2);
+    const durationMin = this.roundTo(duration.value / 60, 2);
+
+    const distanceFare = this.roundTo(distanceKm * vehiclePricing.perKm, 2);
+    const timeFare = this.roundTo(durationMin * vehiclePricing.perMin, 2);
+    const subtotal = this.roundTo(
+      vehiclePricing.baseFare + distanceFare + timeFare,
+      2
+    );
+
+    const gst = this.roundTo(subtotal * 0.05, 2);
+    const total = this.roundTo(subtotal + gst, 2);
+
+    return {
+      vehicleType,
+      distance: distance.text,
+      distanceValue: distance.value,
+      distanceKm,
+      duration: duration.text,
+      durationValue: duration.value,
+      durationMin,
+      breakdown: {
+        baseFare: vehiclePricing.baseFare,
+        distanceFare,
+        timeFare,
+        subtotal,
+        gst,
+        total,
+      },
+    };
+  }
+
+  // async calculateFare(origin, destination, vehicleType = "CAR") {
+  //   try {
+  //     const { distance, duration } = await this.getDistanceTime(
+  //       origin,
+  //       destination
+  //     );
+
+  //     return this.buildFareQuote(distance, duration, vehicleType);
+  //   } catch (error) {
+  //     throw new Error(`Failed to calculate fare: ${error.message}`);
+  //   }
+  // }
+
+  async calculateFareForAllVehicles(origin, destination) {
     try {
-      // Step 1: Get distance and time
       const { distance, duration } = await this.getDistanceTime(
         origin,
         destination
       );
 
-      // Step 2: Define pricing structure
-      const pricing = {
-        CAR: {
-          baseFare: 50,
-          perKm: 12,
-          perMin: 2,
-        },
-        BIKE: {
-          baseFare: 30,
-          perKm: 8,
-          perMin: 1.5,
-        },
-        AUTO: {
-          baseFare: 40,
-          perKm: 10,
-          perMin: 1.8,
-        },
-        E_RICKSHAW: {
-          baseFare: 25,
-          perKm: 6,
-          perMin: 1,
-        },
-        ELECTRIC_SCOOTER: {
-          baseFare: 30,
-          perKm: 8,
-          perMin: 1.5,
-        },
-      };
-
-      const vehiclePricing = pricing[vehicleType] || pricing.CAR;
-
-      // Step 3: Calculate fare
-      const distanceKm = distance.value / 1000;
-      const durationMin = duration.value / 60;
-
-      const distanceFare = distanceKm * vehiclePricing.perKm;
-      const timeFare = durationMin * vehiclePricing.perMin;
-      const subtotal = vehiclePricing.baseFare + distanceFare + timeFare;
-
-      // Apply taxes and fees
-      const gst = subtotal * 0.05; // 5% GST
-      const platformFee = 10;
-      const total = subtotal + gst + platformFee;
+      const vehicleTypes = Object.keys(this.getPricingConfig());
+      const fares = vehicleTypes.map((vehicleType) =>
+        this.buildFareQuote(distance, duration, vehicleType)
+      );
 
       return {
-        vehicleType,
-        distance: distance.text,
-        distanceValue: distance.value,
-        duration: duration.text,
-        durationValue: duration.value,
-        breakdown: {
-          baseFare: vehiclePricing.baseFare,
-          distanceFare: Math.round(distanceFare * 100) / 100,
-          timeFare: Math.round(timeFare * 100) / 100,
-          subtotal: Math.round(subtotal * 100) / 100,
-          gst: Math.round(gst * 100) / 100,
-          platformFee,
-          total: Math.round(total * 100) / 100,
-        },
+        origin,
+        destination,
+        distance,
+        duration,
+        fares,
       };
     } catch (error) {
-      throw new Error(`Failed to calculate fare: ${error.message}`);
+      throw new Error(
+        `Failed to calculate fare for all vehicles: ${error.message}`
+      );
     }
   }
 
@@ -424,7 +461,7 @@ class MapsService {
           },
           instruction:
             step.maneuver?.instruction || step.name || "Continue straight",
-        }))
+        })),
       );
 
       return {

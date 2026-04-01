@@ -67,6 +67,30 @@ export const createJourneySchema = z.object({
             .default('CASH'),
 
         // ============================================
+        // FARE SNAPSHOT FROM FRONTEND
+        // ============================================
+        estimatedFare: z
+            .number({
+                required_error: 'Estimated fare is required',
+                invalid_type_error: 'Estimated fare must be a number'
+            })
+            .positive('Estimated fare must be a positive number'),
+
+        distance: z
+            .number({
+                required_error: 'Distance is required',
+                invalid_type_error: 'Distance must be a number'
+            })
+            .positive('Distance must be a positive number'),
+
+        duration: z
+            .number({
+                required_error: 'Duration is required',
+                invalid_type_error: 'Duration must be a number'
+            })
+            .positive('Duration must be a positive number'),
+
+        // ============================================
         // OPTIONAL FIELDS
         // ============================================
         numberOfPassengers: z

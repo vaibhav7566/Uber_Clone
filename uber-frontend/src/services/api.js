@@ -30,6 +30,7 @@ API.interceptors.request.use((config) => {  // config = Axios request config obj
   const token = localStorage.getItem("token");
 
   if (token) {
+    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
 

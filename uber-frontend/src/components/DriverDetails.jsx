@@ -1,12 +1,16 @@
 import React from 'react'
+import { useSelector } from 'react-redux';
+
 
 const DriverDetails = () => {
+  const User = useSelector((state) => state.auth.user);
+
   return (
     <div>
          <div className="flex items-center justify-between mb-5">
           <div className="flex items-center justify-start gap-3">
             <img className="h-11 w-11 rounded-full object-cover" src="https://imgs.search.brave.com/Jp_TVZo6jxEYGqfKhL2ccL630RX-lmTFERJqJ6oa-ww/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9waG90/b3N3ZWVrLmluL3dw/LWNvbnRlbnQvdXBs/b2Fkcy9BZXN0aGV0/aWMtR2lybC1QaWMu/anBn" alt="" />
-            <h4 className="text-lg font-medium ">Shiv Patel</h4>
+            <h4 className="text-lg font-medium ">{User?.name}</h4>
           </div>
           <div>
             <h4 className="text-xl font-semibold">$2.50</h4>

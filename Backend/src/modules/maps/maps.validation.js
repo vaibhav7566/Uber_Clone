@@ -67,9 +67,9 @@ export const distanceTimeSchema = z.object({
 // ============================================
 // FARE CALCULATION SCHEMA
 // ============================================
-// Validates request body for fare calculation
+// Validates query params for fare calculation
 export const fareCalculationSchema = z.object({
-  body: z.object({
+  query: z.object({
     origin: z
       .string({
         required_error: "Origin is required",
@@ -83,14 +83,6 @@ export const fareCalculationSchema = z.object({
       })
       .min(1, "Destination cannot be empty")
       .trim(),
-
-    vehicleType: z
-      .enum(["CAR", "BIKE", "AUTO", "E_RICKSHAW", "ELECTRIC_SCOOTER"], {
-        required_error: "Vehicle type is required",
-        invalid_type_error: "Invalid vehicle type",
-      })
-      .optional()
-      .default("CAR"),
   }),
 });
 

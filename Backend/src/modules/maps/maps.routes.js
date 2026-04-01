@@ -198,29 +198,22 @@ router.post(
 // ============================================
 // POST /api/maps/calculate-fare
 // Access: Private (Authenticated users)
-// Purpose: Calculate ride fare based on distance, time, and vehicle type
+// Purpose: Calculate ride fare based on distance and time for all vehicle types
 //
 // Middleware Chain:
 // 1. authenticate → Verify JWT token
-// 2. validate(fareCalculationSchema) → Validate request body
+// 2. validate(fareCalculationSchema) → Validate query params
 // 3. calculateFare → Handle request
 //
 // Test in Postman:
 // Method: POST
-// URL: http://localhost:5000/api/maps/calculate-fare
+// URL: http://localhost:5000/api/maps/calculate-fare/distance/time?origin=Bhopal,India&destination=Indore,India
 // Headers:
 //   {
-//     "Authorization": "Bearer <token>",
-//     "Content-Type": "application/json"
-//   }
-// Body (JSON):
-//   {
-//     "origin": "22.5726,88.3639",
-//     "destination": "22.5744,88.3629",
-//     "vehicleType": "CAR"
+//     "Authorization": "Bearer <token>"
 //   }
 router.post(
-  "/calculate-fare",
+  "/calculate-fare/distance/time",
   authenticate,
   validate(fareCalculationSchema),
   calculateFare

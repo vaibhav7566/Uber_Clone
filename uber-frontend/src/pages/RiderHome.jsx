@@ -1,6 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import { useDispatch } from "react-redux";
 import "remixicon/fonts/remixicon.css";
 import LocationSearchPanel from "../components/LocationSearchPanel";
 import VehiclePanel from "../components/VehiclePanel";
@@ -8,11 +9,23 @@ import ConfirmRide from "../components/ConfirmRide";
 import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
 import Sidebar from "../components/SideBar";
+import { getAddressSuggestions } from "../features/rider/riderAPI";
+import {
+  fetchFareData,
+  setRideDestinationCoordinates,
+  setRideDestination,
+  setRideOriginCoordinates,
+  setRideOrigin,
+} from "../features/ride/rideSlice";
 
 const RiderHome = () => {
+  const dispatch = useDispatch();
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [activeField, setActiveField] = useState("pickup");
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
 
   const panelRef = useRef(null);
   const panelCloseRef = useRef(null);
@@ -32,12 +45,97 @@ const RiderHome = () => {
     e.preventDefault();
   };
 
+  const canOpenVehiclePanel = pickup.trim() && destination.trim();
+
+  useEffect(() => {
+    if (!panelOpen) {
+      setLocationSuggestions([]);
+      setIsSuggestionsLoading(false);
+      return;
+    }
+
+    const searchText =
+      activeField === "pickup" ? pickup.trim() : destination.trim();
+
+    if (searchText.length < 2) {
+      setLocationSuggestions([]);
+      setIsSuggestionsLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const timerId = setTimeout(async () => {
+      try {
+        setIsSuggestionsLoading(true);
+        const response = await getAddressSuggestions(searchText);
+
+        if (!isCancelled) {
+          setLocationSuggestions(response.data?.data || []);
+        }
+      } catch {
+        if (!isCancelled) {
+          setLocationSuggestions([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsSuggestionsLoading(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timerId);
+    };
+  }, [pickup, destination, activeField, panelOpen]);
+
+  const handleSuggestionSelect = (suggestion) => {
+    const selectedAddress =
+      suggestion?.description || suggestion?.mainText || "";
+    const selectedCoordinates = suggestion?.coordinates
+      ? {
+          lat: suggestion.coordinates.lat,
+          lng: suggestion.coordinates.lng,
+        }
+      : null;
+
+    if (activeField === "pickup") {
+      setPickup(selectedAddress);
+      dispatch(setRideOriginCoordinates(selectedCoordinates));
+      setActiveField("destination");
+    } else {
+      setDestination(selectedAddress);
+      dispatch(setRideDestinationCoordinates(selectedCoordinates));
+    }
+
+    setLocationSuggestions([]);
+  };
+
+  const handleFindRideClick = () => {
+    if (!canOpenVehiclePanel) {
+      return;
+    }
+
+    const trimmedPickup = pickup.trim();
+    const trimmedDestination = destination.trim();
+
+    dispatch(setRideOrigin(trimmedPickup));
+    dispatch(setRideDestination(trimmedDestination));
+    dispatch(
+      fetchFareData({ origin: trimmedPickup, destination: trimmedDestination }),
+    );
+
+    setPanelOpen(false);
+    setVehiclePanelOpen(true);
+  };
+
   // it is used to open and close the location search panel
   useGSAP(
     function () {
       if (panelOpen) {
         gsap.to(panelRef.current, {
-          height: "70%",
+          height: "62%",
           padding: 24,
           // opacity:1
         });
@@ -77,6 +175,10 @@ const RiderHome = () => {
   // it is used to open and close the confirm ride panel
   useGSAP(
     function () {
+      if (!confirmRidePanelRef.current) {
+        return;
+      }
+
       if (confirmRidePanel) {
         gsap.to(confirmRidePanelRef.current, {
           transform: "translateY(0)",
@@ -124,38 +226,40 @@ const RiderHome = () => {
 
   return (
     <div className="h-screen relative overflow-hidden">
-      <div className="overflow-y-hidden">
+      <div className="fixed top-0 left-0 w-full z-40 px-5 pt-4 pb-2 flex items-center justify-between">
         <img
-          className="w-16 absolute left-5 top-5"
+          className="w-16 h-auto block"
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
-          alt=""
+          alt="Uber"
         />
-         
-         <i
+
+        <i
           onClick={() => setMenuOpen(true)}
-          className="ri-menu-fill absolute right-5 top-5 text-2xl cursor-pointer z-2"
-        ></i> 
+          className="ri-menu-fill text-2xl cursor-pointer"
+        ></i>
 
         <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       </div>
 
       <div
-        className="h-screen w-screen"
+        className={`h-screen w-screen ${panelOpen ? "bg-white" : ""}`}
         onClick={() => {
           setPanelOpen(false);
           setVehiclePanelOpen(false);
         }}
       >
         {/* image for temporary use  */}
-        <img
-          className="h-full w-full object-cover"
-          src="https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif"
-          alt=""
-        />
+        {!panelOpen ? (
+          <img
+            className="h-full w-full object-cover"
+            src="https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif"
+            alt=""
+          />
+        ) : null}
       </div>
 
       {/* THis is the pickup and destination input container with location search panel means when we click on pickup and destination inpit fields then this container will open and also open the location search panel. */}
-      <div className=" flex flex-col justify-end h-screen absolute top-0 w-full">
+      <div className=" flex flex-col justify-end h-screen absolute top-0 w-full ">
         {/* // this is the pickup and destination input container */}
         <div className="h-[33%] p-6 bg-white relative z-3 ">
           <h5
@@ -177,10 +281,17 @@ const RiderHome = () => {
             <input
               onClick={() => {
                 setPanelOpen(true);
+                setActiveField("pickup");
+              }}
+              onFocus={() => {
+                setPanelOpen(true);
+                setActiveField("pickup");
               }}
               value={pickup}
               onChange={(e) => {
+                setActiveField("pickup");
                 setPickup(e.target.value);
+                dispatch(setRideOriginCoordinates(null));
               }}
               className="bg-[#eee] px-11 py-2 text-lg rounded-lg w-full mt-4"
               type="text"
@@ -189,24 +300,46 @@ const RiderHome = () => {
             <input
               onClick={() => {
                 setPanelOpen(true);
+                setActiveField("destination");
+              }}
+              onFocus={() => {
+                setPanelOpen(true);
+                setActiveField("destination");
               }}
               value={destination}
               onChange={(e) => {
+                setActiveField("destination");
                 setDestination(e.target.value);
+                dispatch(setRideDestinationCoordinates(null));
               }}
               className="bg-[#eee] px-11 py-2 text-lg rounded-lg w-full  mt-3"
               type="text"
               placeholder="Enter your destination"
             />
+
+            <button
+              type="button"
+              onClick={handleFindRideClick}
+              disabled={!canOpenVehiclePanel}
+              className={`w-full mt-7 py-2 mb-5 rounded-lg text-white font-semibold transition ${
+                canOpenVehiclePanel
+                  ? "bg-black hover:bg-zinc-800"
+                  : "bg-zinc-400 cursor-not-allowed"
+              }`}
+            >
+              Find Ride
+            </button>
           </form>
         </div>
 
         {/* // this is the location search panel */}
-        <div ref={panelRef} className="bg-white h-0">
+        <div ref={panelRef} className="bg-white h-0 overflow-y-auto ">
           <LocationSearchPanel
-            setPanelOpen={setPanelOpen}
-            setVehiclePanelOpen={setVehiclePanelOpen}
-          
+            // setPanelOpen={setPanelOpen}
+            // setVehiclePanelOpen={setVehiclePanelOpen}
+            suggestions={locationSuggestions}
+            loading={isSuggestionsLoading}
+            onSelectSuggestion={handleSuggestionSelect}
           />
         </div>
       </div>
@@ -223,23 +356,31 @@ const RiderHome = () => {
       </div>
 
       {/* // this is the confirm ride panel */}
-      <div
-        ref={confirmRidePanelRef}
-        className="fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-6 pt-12"
-      >
-        <ConfirmRide
-          setConfirmRidePanel={setConfirmRidePanel}
-          setVehiclePanelOpen={setVehiclePanelOpen}
-          setvehicleFound={setvehicleFound}
-        />
-      </div>
+      {confirmRidePanel ? (
+        <div
+          ref={confirmRidePanelRef}
+          className="fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-6 pt-12"
+        >
+          <ConfirmRide
+            setConfirmRidePanel={setConfirmRidePanel}
+            setVehiclePanelOpen={setVehiclePanelOpen}
+            setvehicleFound={setvehicleFound}
+            pickupLocation={pickup}
+            destinationLocation={destination}
+          />
+        </div>
+      ) : null}
 
       {/* // this is the looking for driver panel */}
       <div
         ref={vehicleFoundRef}
         className="fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-6 pt-12"
       >
-        <LookingForDriver setvehicleFound={setvehicleFound} />
+        <LookingForDriver
+          setvehicleFound={setvehicleFound}
+          pickupLocation={pickup}
+          destinationLocation={destination}
+        />
       </div>
 
       {/* // this is the waiting for driver panel */}

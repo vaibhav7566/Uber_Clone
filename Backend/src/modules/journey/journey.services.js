@@ -2,7 +2,7 @@ import { Ride } from '../model/journey.model.js';
 import  User  from '../model/user.model.js';
 import { Driver } from '../model/driver.model.js';
 import QRCode from 'qrcode';
-import { mapsService } from '../maps/maps.services.js';
+import crypto from 'crypto';
 
 // ============================================
 // JOURNEY SERVICE - Business Logic Layer
@@ -20,7 +20,7 @@ class JourneyService {
     //
     // Flow:
     // 1. Validate rider exists
-    // 2. Calculate estimated fare based on distance
+    // 2. Read estimated fare snapshot sent by frontend quote API
     // 3. Create journey with REQUESTED status
     // 4. Return journey details
     //
@@ -36,19 +36,10 @@ class JourneyService {
             throw new Error('Rider not found');
         }
 
-        const origin = this.toLatLngString(journeyData.pickupCoordinates);
-        const destination = this.toLatLngString(journeyData.dropoffCoordinates);
+        const pickupLocation = this.normalizeJourneyCoordinates(journeyData.pickupCoordinates);
+        const dropoffLocation = this.normalizeJourneyCoordinates(journeyData.dropoffCoordinates);
 
-        // Single source of truth for quote pricing: mapsService
-        const fareQuote = await mapsService.calculateFare(
-            origin,
-            destination,
-            journeyData.vehicleType
-        );
-
-        const estimatedFare = fareQuote.breakdown.total;
-        const distanceInKm = Math.round((fareQuote.distanceValue / 1000) * 100) / 100;
-        const durationInMin = Math.round((fareQuote.durationValue / 60) * 100) / 100;
+        const { estimatedFare, distanceInKm, durationInMin } = this.extractQuoteSnapshot(journeyData);
 
         // Create journey
         const journey = new Ride({
@@ -58,19 +49,20 @@ class JourneyService {
                 address: journeyData.pickupAddress,
                 location: {
                     type: 'Point',
-                    coordinates: journeyData.pickupCoordinates  // [longitude, latitude]
+                    coordinates: pickupLocation.coordinates  // [longitude, latitude]
                 }
             },
             dropoff: {
                 address: journeyData.dropoffAddress,
                 location: {
                     type: 'Point',
-                    coordinates: journeyData.dropoffCoordinates  // [longitude, latitude]
+                    coordinates: dropoffLocation.coordinates  // [longitude, latitude]
                 }
             },
             estimatedFare,
             distance: distanceInKm,
             duration: durationInMin,
+            otp: this.getOtp(4), // Generate a 4-digit OTP for ride verification
             paymentMethod: journeyData.paymentMethod,
             status: 'REQUESTED'
         });
@@ -81,18 +73,79 @@ class JourneyService {
         return this.formatJourneyResponse(journey);
     }
 
-    toLatLngString(coords) {
-        if (!Array.isArray(coords) || coords.length !== 2) {
-            throw new Error('Coordinates must be [longitude, latitude]');
+    extractQuoteSnapshot(journeyData) {
+        const estimatedFare = Number(journeyData?.estimatedFare);
+        const distanceInKm = Number(journeyData?.distance);
+        const durationInMin = Number(journeyData?.duration);
+
+        if (!Number.isFinite(estimatedFare) || estimatedFare <= 0) {
+            throw new Error('estimatedFare must be a positive number');
         }
 
-        const [lng, lat] = coords;
+        if (!Number.isFinite(distanceInKm) || distanceInKm <= 0) {
+            throw new Error('distance must be a positive number');
+        }
 
-        if (typeof lat !== 'number' || typeof lng !== 'number') {
+        if (!Number.isFinite(durationInMin) || durationInMin <= 0) {
+            throw new Error('duration must be a positive number');
+        }
+
+        return { estimatedFare, distanceInKm, durationInMin };
+    }
+
+    normalizeJourneyCoordinates(coords) {
+        if (!Array.isArray(coords) || coords.length !== 2) {
+            throw new Error('Coordinates must be [longitude, latitude] or [latitude, longitude]');
+        }
+
+        const first = Number(coords[0]);
+        const second = Number(coords[1]);
+
+        if (Number.isNaN(first) || Number.isNaN(second)) {
             throw new Error('Coordinates must contain valid numbers');
         }
 
-        return `${lat},${lng}`;
+        // Case 1: obvious [lng, lat]
+        if (Math.abs(first) > 90 && Math.abs(second) <= 90) {
+            return {
+                lat: second,
+                lng: first,
+                coordinates: [first, second],
+            };
+        }
+
+        // Case 2: obvious [lat, lng]
+        if (Math.abs(first) <= 90 && Math.abs(second) > 90) {
+            return {
+                lat: first,
+                lng: second,
+                coordinates: [second, first],
+            };
+        }
+
+        // India-biased heuristic (project currently IN focused)
+        const isLikelyIndianLat = (value) => value >= 6 && value <= 38;
+        const isLikelyIndianLng = (value) => value >= 68 && value <= 98;
+
+        const looksLikeLatLng =
+            isLikelyIndianLat(first) && isLikelyIndianLng(second);
+        const looksLikeLngLat =
+            isLikelyIndianLng(first) && isLikelyIndianLat(second);
+
+        if (looksLikeLatLng && !looksLikeLngLat) {
+            return {
+                lat: first,
+                lng: second,
+                coordinates: [second, first],
+            };
+        }
+
+        // Default: treat as [lng, lat] (GeoJSON standard)
+        return {
+            lat: second,
+            lng: first,
+            coordinates: [first, second],
+        };
     }
 
     // ============================================
@@ -112,6 +165,15 @@ class JourneyService {
     //   - driverId: ObjectId of Driver
     //
     // Returns: Updated journey object
+
+    getOtp(num) {
+
+        // Generate a random OTP with specified number of digits
+        const otp = crypto.randomInt(Math.pow(10, num - 1), Math.pow(10, num)).toString();
+        
+        return otp;
+    } 
+
     async acceptJourney(journeyId, driverId) {
         // Validate driver
         const driver = await Driver.findById(driverId).populate('userId');
@@ -518,6 +580,8 @@ class JourneyService {
             actualFare: journey.actualFare,
             distance: journey.distance,
             duration: journey.duration,
+
+            otp: journey.otp, // Include OTP in response for verification purposes
 
             paymentMethod: journey.paymentMethod,
             paymentStatus: journey.paymentStatus,

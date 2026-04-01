@@ -124,6 +124,12 @@ const journeySchema = new mongoose.Schema({
         min: [0, 'Duration cannot be negative']
     },
 
+    otp: {
+        type: String,
+        select: false,
+        required:true,
+    },
+
     // ============================================
     // PAYMENT DETAILS
     // ============================================
