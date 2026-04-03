@@ -1,18 +1,23 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
 import DriverDetails from "../components/DriverDetails";
 import RidePopUp from "../components/RidePopUp";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
 import gsap from "gsap";
 import ConfirmRidePopup from "../components/ConfirmRidePopup";
+import { useSocket } from "../hooks/useSocket";
+// import { socket } from "socket.io-client";
+// const { socket } = useSocket();
 
 function DriverDashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { isConnected, emitEvent, onEvent, offEvent } = useSocket();
+  const authState = useSelector((state) => state.auth);
   
   const [ridePopupPanel, setRidePopupPanel] = useState(true);
   const ridePopupPanelRef = useRef(null);
@@ -25,6 +30,59 @@ function DriverDashboard() {
     toast.success("Logged out successfully");
     navigate("/login");
   };
+
+  useEffect(() => {
+    if (!isConnected || authState.role !== "DRIVER") {
+      return;
+    }
+
+    const sendLocation = () => {
+      if (!navigator.geolocation) {
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition((position) => {
+
+        console.log("DriverDashboard => Emitting location update:", {
+          userId: authState.user?._id,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+
+        emitEvent("update-location-driver", {
+          userId: authState.user?._id,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      });
+    };
+
+    const intervalId = setInterval(sendLocation, 10000);
+    sendLocation();
+    
+
+    return () => clearInterval(intervalId);
+  }, [isConnected, authState.role, authState.user?._id, emitEvent]);
+
+
+  // socket.on("new-journey", (data) => {
+  //   console.log("New journey request received:", data);
+  //   // setRidePopupPanel(true);
+  // });
+  useEffect(() => {
+    if (!isConnected || authState.role !== "DRIVER") {
+      return;
+    }
+
+    onEvent("new-journey", (data) => {
+      console.log("New journey request received:", data);
+      // setRidePopupPanel(true);
+    });
+
+    return () => {
+      offEvent("new-journey");
+    };
+  }, [isConnected, authState.role, onEvent, offEvent]);
 
   useGSAP(
     function () {

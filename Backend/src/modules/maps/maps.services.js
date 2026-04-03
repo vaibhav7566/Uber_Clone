@@ -1,5 +1,6 @@
 import axios from "axios";
 import { env } from "../../config/env.js";
+import { Driver } from "../model/driver.model.js";
 
 // ============================================
 // MAPS SERVICE - Business Logic Layer
@@ -480,6 +481,79 @@ class MapsService {
       };
     } catch (error) {
       throw new Error(`Failed to get route: ${error.message}`);
+    }
+  }
+  
+  // async getDriversInRadius(Longitude, Latitude, RadiusInKm = 3) {
+  //   try {
+  //     const longitude = Number(Longitude);
+  //     const latitude = Number(Latitude);
+  //     const radiusInKm = Number(RadiusInKm);
+
+  //     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+  //       throw new Error("Invalid latitude/longitude for radius search");
+  //     }
+
+  //     const maxDistanceInMeters = Number(radiusInKm) * 1000;
+
+  //     if (!Number.isFinite(maxDistanceInMeters) || maxDistanceInMeters <= 0) {
+  //       throw new Error("Radius must be a positive number");
+  //     }
+
+  //     const drivers = await Driver.find({
+  //       location: {
+  //         $near: {
+  //           $geometry: {
+  //             type: "Point",
+  //             coordinates: [longitude, latitude],
+  //           },
+  //           $maxDistance: maxDistanceInMeters,
+  //         },
+  //       },
+  //       "status.isOnline": true,
+  //       "approvalStatus.status": "APPROVED",
+  //     })
+  //       .populate({
+  //         path: "userId",
+  //         select: "name email phone role socketId isActive createdAt updatedAt",
+  //       })
+  //       .lean();
+
+  //     return drivers;
+  //   } catch (error) {
+  //     throw new Error(`Failed to get drivers in radius: ${error.message}`);
+  //   }
+  // }
+  
+
+   async getDriversInRadius(Longitude, Latitude, RadiusInKm = 3) {
+    try {
+      const lng = Number(Longitude);
+      const ltd = Number(Latitude);
+      const radius = Number(RadiusInKm);
+
+
+      const drivers = await Driver.find({
+        location: {
+            $geoWithin: {
+                $centerSphere: [
+                    [lng, ltd],
+                    radius / 6371 // Earth's radius in km
+                ]
+          },
+        },
+        "status.isOnline": true,
+        "approvalStatus.status": "APPROVED",
+      })
+        .populate({
+          path: "userId",
+          select: "name email phone role socketId isActive createdAt updatedAt",
+        })
+        .lean();
+
+      return drivers;
+    } catch (error) {
+      throw new Error(`Failed to get drivers in radius: ${error.message}`);
     }
   }
 }

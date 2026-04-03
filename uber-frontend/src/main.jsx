@@ -11,9 +11,12 @@ import "react-toastify/dist/ReactToastify.css";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/Routes";
 import { useAuth } from "./hooks/useAuth";
+import { useSocket } from "./hooks/useSocket";
 
 function App() {
-  useAuth(); // Fetch user on app mount if token exists
+  useAuth();
+  useSocket();
+
   return (
     <>
       <RouterProvider router={router} />

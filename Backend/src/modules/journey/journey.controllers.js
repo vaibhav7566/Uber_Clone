@@ -1,4 +1,7 @@
+import { mapsService } from "../maps/maps.services.js";
 import { journeyService } from "./journey.services.js";
+import { sendMessageToSocketId } from "../../socket.js";    
+import { Ride } from "../model/journey.model.js";
 
 /**
  * @swagger
@@ -193,14 +196,48 @@ import { journeyService } from "./journey.services.js";
  */
 export const createJourney = async (req, res) => {
     try {
+        console.log("createJourney hit");
         const userId = req.user._id;
         const journeyData = req.body;
         const journey = await journeyService.createJourney(userId, journeyData);
+
+        // console.log(journey);
+
         res.status(201).json({
             success: true,
             data: journey,
             message: 'Journey created successfully'
         });
+
+        const pickupLongitude = journey.pickup.location.coordinates[0];
+        const pickupLatitude = journey.pickup.location.coordinates[1];
+        const driversInRadius = await mapsService.getDriversInRadius(
+            pickupLongitude,
+            pickupLatitude,
+            50,
+        ); // 2km radius
+        
+        // console.log("Drivers in range===>", driversInRadius);
+        
+        journey.otp = "";
+
+        const journeyWithUser = await Ride.findById(journey._id)
+            .populate({ path: 'riderId', select: 'name email phone' });
+
+            console.log("Journey with user details===>", journeyWithUser);
+
+       driversInRadius.map( (driver) => {
+
+        console.log(driver,journey);
+
+        sendMessageToSocketId(driver.socketId, {
+            event: "new-journey",
+            data: journeyWithUser,
+            });
+       });
+
+
+
     } catch (error) {
         console.error('Error in createJourney:', error);
         res.status(500).json({

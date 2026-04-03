@@ -11,13 +11,29 @@ import { swaggerSpec } from "./config/swagger.js";
 
 const app = express();
 
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  return (
+    /^https?:\/\/localhost:\d+$/i.test(origin) ||
+    /^https:\/\/([a-z0-9-]+\.)*devtunnels\.ms$/i.test(origin)
+  );
+};
+
 
 // ============================================
 // CORS MIDDLEWARE
 // ============================================
 // Allows frontend (localhost:5173) to make requests to backend (localhost:3000)
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  const origin = req.headers.origin;
+
+  if (isAllowedOrigin(origin)) {
+    res.header("Access-Control-Allow-Origin", origin || "*");
+  }
+
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");

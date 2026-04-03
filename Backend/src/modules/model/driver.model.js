@@ -240,6 +240,12 @@ const driverSchema = new mongoose.Schema(
         default: [0, 0],
       },
     },
+
+    socketId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields
@@ -258,6 +264,7 @@ driverSchema.index({ location: "2dsphere" });
 
 // Index for faster userId lookups
 driverSchema.index({ userId: 1 });
+driverSchema.index({ socketId: 1 });
 
 // ============================================
 // PRE-SAVE HOOK: Encrypt Aadhar Number

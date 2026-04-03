@@ -52,6 +52,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    socketId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true, // this will automatically add createdAt and updatedAt fields to the schema, which will store the date and time when a document is created and last updated, respectively.
@@ -59,6 +64,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ email: 1 }); // creates an index on the email field to improve query performance when searching for users by email.
+userSchema.index({ socketId: 1 });
 
 userSchema.pre("save", async function () {
   // this is a pre-save hook that will run before a user document is saved to the database. It checks if the password field has been modified, and if so, it hashes the password using bcrypt before saving it to the database.

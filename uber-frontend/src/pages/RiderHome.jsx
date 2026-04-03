@@ -20,6 +20,7 @@ import {
 
 const RiderHome = () => {
   const dispatch = useDispatch();
+
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
@@ -39,7 +40,6 @@ const RiderHome = () => {
   const waitingForDriverRef = useRef(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
-  // const [menuController, setMenuController] = useState(true);
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -226,6 +226,7 @@ const RiderHome = () => {
 
   return (
     <div className="h-screen relative overflow-hidden">
+
       <div className="fixed top-0 left-0 w-full z-40 px-5 pt-4 pb-2 flex items-center justify-between">
         <img
           className="w-16 h-auto block"
