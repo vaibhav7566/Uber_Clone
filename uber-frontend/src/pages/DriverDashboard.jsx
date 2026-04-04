@@ -10,6 +10,8 @@ import { useRef } from "react";
 import gsap from "gsap";
 import ConfirmRidePopup from "../components/ConfirmRidePopup";
 import { useSocket } from "../hooks/useSocket";
+// import { emit } from "node:cluster";
+import axios from "axios";
 // import { socket } from "socket.io-client";
 // const { socket } = useSocket();
 
@@ -18,12 +20,14 @@ function DriverDashboard() {
   const dispatch = useDispatch();
   const { isConnected, emitEvent, onEvent, offEvent } = useSocket();
   const authState = useSelector((state) => state.auth);
-  
-  const [ridePopupPanel, setRidePopupPanel] = useState(true);
+
+  const [ridePopupPanel, setRidePopupPanel] = useState(false);
   const ridePopupPanelRef = useRef(null);
-  
+
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
   const confirmRidePopupPanelRef = useRef(null);
+
+  const [ride, setRide] = useState(null);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -42,7 +46,6 @@ function DriverDashboard() {
       }
 
       navigator.geolocation.getCurrentPosition((position) => {
-
         console.log("DriverDashboard => Emitting location update:", {
           userId: authState.user?._id,
           latitude: position.coords.latitude,
@@ -59,11 +62,9 @@ function DriverDashboard() {
 
     const intervalId = setInterval(sendLocation, 10000);
     sendLocation();
-    
 
     return () => clearInterval(intervalId);
   }, [isConnected, authState.role, authState.user?._id, emitEvent]);
-
 
   // socket.on("new-journey", (data) => {
   //   console.log("New journey request received:", data);
@@ -76,13 +77,28 @@ function DriverDashboard() {
 
     onEvent("new-journey", (data) => {
       console.log("New journey request received:", data);
-      // setRidePopupPanel(true);
+      setRide(data);
+      setRidePopupPanel(true);
     });
 
     return () => {
       offEvent("new-journey");
     };
   }, [isConnected, authState.role, onEvent, offEvent]);
+
+    const confirmRide = async () => {
+      if (!ride || !ride._id) {
+        console.error("Invalid ride data");
+        return;
+      }
+        const  journeyId  = ride._id;
+      const res = await axios.post(`http://localhost:3000/api/journey/${journeyId}/accept`, {}, {
+        headers: {
+          Authorization: `Bearer ${authState.token}`,
+        },
+      });
+      console.log("Ride confirmed response:", res.data);
+    }
 
   useGSAP(
     function () {
@@ -99,7 +115,6 @@ function DriverDashboard() {
     [ridePopupPanel],
   );
 
-  
   useGSAP(
     function () {
       if (confirmRidePopupPanel) {
@@ -141,13 +156,29 @@ function DriverDashboard() {
       <div className="h-2/5 p-6">
         <DriverDetails />
       </div>
-      <div ref={ridePopupPanelRef} className="fixed w-full z-10 translate-y-full bottom-0  bg-white px-3 py-10 pt-12">
-        <RidePopUp setRidePopupPanel={setRidePopupPanel} setConfirmRidePopupPanel={setConfirmRidePopupPanel} />
+      <div
+        ref={ridePopupPanelRef}
+        className="fixed w-full z-10 translate-y-full bottom-0  bg-white px-3 py-10 pt-12"
+      >
+        <RidePopUp
+        ride={ride}
+          setRidePopupPanel={setRidePopupPanel}
+          setConfirmRidePopupPanel={setConfirmRidePopupPanel}
+          confirmRide = {confirmRide}
+        />
       </div>
 
-        <div ref={confirmRidePopupPanelRef} className="fixed w-full h-screen z-10 translate-y-full bottom-0  bg-white px-3 py-10 pt-12">
-          <ConfirmRidePopup setConfirmRidePopupPanel={setConfirmRidePopupPanel} setRidePopupPanel={setRidePopupPanel} />
-        </div>
+      <div
+        ref={confirmRidePopupPanelRef}
+        className="fixed w-full h-screen z-10 translate-y-full bottom-0  bg-white px-3 py-10 pt-12"
+      >
+        {console.log("Rendering ConfirmRidePopup with ride data:", ride)}
+        <ConfirmRidePopup
+            ride={ride}
+          setConfirmRidePopupPanel={setConfirmRidePopupPanel}
+          setRidePopupPanel={setRidePopupPanel}
+        />
+      </div>
     </div>
   );
 }

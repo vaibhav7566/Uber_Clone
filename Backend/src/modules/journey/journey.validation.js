@@ -123,7 +123,21 @@ export const updateJourneyStatusSchema = z.object({
             .enum(['ARRIVED', 'STARTED'], {
                 required_error: 'Status is required',
                 invalid_type_error: 'Invalid status. Only ARRIVED or STARTED allowed'
-            })
+            }),
+        otp: z
+            .string()
+            .trim()
+            .length(4, 'OTP must be 4 digits')
+            .regex(/^\d{4}$/, 'OTP must be numeric')
+            .optional()
+    }).superRefine((data, ctx) => {
+        if (data.status === 'STARTED' && !data.otp) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'OTP is required when starting journey',
+                path: ['otp']
+            });
+        }
     })
 });
 

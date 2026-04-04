@@ -248,15 +248,14 @@ journeySchema.index({ 'dropoff.location': '2dsphere' });
 
 // Check if journey can be cancelled
 journeySchema.methods.canBeCancelled = function () {
-    return ['REQUESTED', 'ACCEPTED', 'ARRIVED'].includes(this.status);
+    return ['REQUESTED', 'ACCEPTED'].includes(this.status);
 };
 
 // Check if status transition is valid
 journeySchema.methods.isValidStatusTransition = function (newStatus) {
     const validTransitions = {
         'REQUESTED': ['ACCEPTED', 'CANCELLED'],
-        'ACCEPTED': ['ARRIVED', 'CANCELLED'],
-        'ARRIVED': ['STARTED', 'CANCELLED'],
+        'ACCEPTED': ['STARTED', 'CANCELLED'],
         'STARTED': ['COMPLETED', 'CANCELLED'],
         'COMPLETED': [],
         'CANCELLED': []

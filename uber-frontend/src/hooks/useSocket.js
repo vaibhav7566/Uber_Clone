@@ -94,7 +94,7 @@ export const useSocket = () => {
           userType: String(authState.role).toLowerCase(),
         };
         socket.emit("join", joinPayload);
-        console.log("[SOCKET HOOK] Emitted join event:", joinPayload);
+        // console.log("[SOCKET HOOK] Emitted join event:", joinPayload);
       }
     }
   }, [socketState.isConnected, authState.user?._id, authState.role]);

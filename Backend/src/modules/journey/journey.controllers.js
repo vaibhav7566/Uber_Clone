@@ -2,6 +2,15 @@ import { mapsService } from "../maps/maps.services.js";
 import { journeyService } from "./journey.services.js";
 import { sendMessageToSocketId } from "../../socket.js";    
 import { Ride } from "../model/journey.model.js";
+import { Driver } from "../model/driver.model.js";
+
+const getAuthenticatedDriverId = async (req) => {
+    const driver = await Driver.findOne({ userId: req.user._id }).select("_id");
+    if (!driver) {
+        throw new Error("Driver profile not found");
+    }
+    return driver._id;
+};
 
 /**
  * @swagger
@@ -295,8 +304,16 @@ export const createJourney = async (req, res) => {
 export const acceptJourney = async (req, res) => {
     try {
         const { journeyId } = req.params;
-        const driverId = req.user.driver._id;
+        const driverId = req.user._id;
         const journey = await journeyService.acceptJourney(journeyId, driverId);
+
+        console.log("Journey accepted:", journey);
+
+        sendMessageToSocketId(journey.rider.socketId, {
+            event: "journey-accepted",
+            data: journey
+        });
+
         res.status(200).json({
             success: true,
             data: journey,
@@ -342,8 +359,15 @@ export const acceptJourney = async (req, res) => {
  *               status:
  *                 type: string
  *                 enum: [ARRIVED, STARTED]
+ *               otp:
+ *                 type: string
+ *                 description: Required when status is STARTED (4-digit ride OTP)
+ *                 minLength: 4
+ *                 maxLength: 4
+ *                 example: "1234"
  *           example:
- *             status: "ARRIVED"
+ *             status: "STARTED"
+ *             otp: "1234"
  *     responses:
  *       200:
  *         description: Journey status updated successfully
@@ -360,7 +384,7 @@ export const acceptJourney = async (req, res) => {
  *                 data:
  *                   $ref: '#/components/schemas/JourneyResponse'
  *       400:
- *         description: Invalid status transition
+ *         description: Invalid status transition or OTP validation failed
  *       401:
  *         description: Unauthorized
  *       404:
@@ -371,9 +395,17 @@ export const acceptJourney = async (req, res) => {
 export const updateJourneyStatus = async (req, res) => {
     try {
         const { journeyId } = req.params;
-        const { status } = req.body;
-        const driverId = req.user.driver._id;
-        const journey = await journeyService.updateJourneyStatus(journeyId, driverId, status);
+        const { status , otp } = req.body;
+        const driverId = await getAuthenticatedDriverId(req);
+        const journey = await journeyService.updateJourneyStatus(journeyId, driverId, status, otp);
+
+        if (status === 'STARTED' && journey?.rider?.socketId) {
+            sendMessageToSocketId(journey.rider.socketId, {
+                event: 'journey-started',
+                data: journey
+            });
+        }
+
         res.status(200).json({
             success: true,
             data: journey,
@@ -455,7 +487,7 @@ export const completeJourney = async (req, res) => {
     try {
         const { journeyId } = req.params;
         const { actualFare, distance, duration } = req.body;
-        const driverId = req.user.driver._id;
+        const driverId = await getAuthenticatedDriverId(req);
         const completionData = { actualFare, distance, duration };
         const journey = await journeyService.completeJourney(journeyId, driverId, completionData);
         res.status(200).json({
@@ -716,7 +748,7 @@ export const getRiderJourneys = async (req, res) => {
  */
 export const getDriverJourneys = async (req, res) => {
     try {
-        const driverId = req.user.driver._id;
+        const driverId = await getAuthenticatedDriverId(req);
         const { status } = req.query;
         const journeys = await journeyService.getDriverJourneys(driverId, status || null);
         res.status(200).json({

@@ -133,9 +133,9 @@ router.post(
 // ============================================
 // PATCH /api/journey/:journeyId/status
 // Access: Private (Journey driver only)
-// Purpose: Driver updates journey status (ARRIVED, STARTED)
-// request body: { status: 'ARRIVED' } or { status: 'STARTED' }
-// Note: Journey can only be updated to ARRIVED or STARTED using this endpoint. COMPLETED and CANCELLED are handled separately.
+// Purpose: Driver updates journey status (STARTED)
+// request body:  { status: 'STARTED' , otp}
+// Note: Journey can only be updated to STARTED using this endpoint. COMPLETED and CANCELLED are handled separately.
 router.patch(
   "/:journeyId/status",
   authenticate, // Verify JWT token

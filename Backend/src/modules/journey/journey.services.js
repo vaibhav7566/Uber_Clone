@@ -3,6 +3,7 @@ import  User  from '../model/user.model.js';
 import { Driver } from '../model/driver.model.js';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
+import { Types } from 'mongoose';
 
 // ============================================
 // JOURNEY SERVICE - Business Logic Layer
@@ -173,10 +174,13 @@ class JourneyService {
         
         return otp;
     } 
-
     async acceptJourney(journeyId, driverId) {
         // Validate driver
-        const driver = await Driver.findById(driverId).populate('userId');
+        // console.log("Journey services ===> Driver id:", driverId, "Journey id:", journeyId);
+
+        const driver = await Driver.findOne({ userId: driverId }).populate('userId');
+
+        console.log("Journey services ===> Driver details:", driver);
         if (!driver) {
             throw new Error('Driver not found');
         }
@@ -205,15 +209,22 @@ class JourneyService {
         }
 
         // Assign driver and update status
-        journey.driverId = driverId;
+        journey.driverId = driver._id;
+        console.log("Journey services ===> Assigned driver to journey:", journey.driverId, driverId);
         journey.status = 'ACCEPTED';
         journey.acceptedAt = new Date();
 
         await journey.save();
         await journey.populate([
-            { path: 'riderId', select: 'name email phone' },
+            { path: 'riderId', select: 'name email phone socketId' },
             { path: 'driverId', populate: { path: 'userId', select: 'name email phone' } }
         ]);
+
+        // Ensure OTP is present even if schema has select: false
+        const journeyWithOtp = await Ride.findById(journey._id).select('+otp');
+        if (journeyWithOtp?.otp) {
+            journey.otp = journeyWithOtp.otp;
+        }
 
         return this.formatJourneyResponse(journey);
     }
@@ -234,8 +245,8 @@ class JourneyService {
     //   - newStatus: New status (ARRIVED or STARTED)
     //
     // Returns: Updated journey object
-    async updateJourneyStatus(journeyId, driverId, newStatus) {
-        const journey = await Ride.findById(journeyId);
+    async updateJourneyStatus(journeyId, driverId, newStatus , otp) {
+        const journey = await Ride.findById(journeyId).select('+otp');
 
         if (!journey) {
             throw new Error('Journey not found');
@@ -251,18 +262,29 @@ class JourneyService {
             throw new Error(`Cannot transition from ${journey.status} to ${newStatus}`);
         }
 
+        if (newStatus === 'STARTED') {
+            if (!otp) {
+                throw new Error('OTP is required to start journey');
+            }
+
+            if (String(journey.otp) !== String(otp).trim()) {
+                throw new Error('Invalid OTP');
+            }
+        }
+
         // Update status and timestamp
         journey.status = newStatus;
 
-        if (newStatus === 'ARRIVED') {
-            journey.arrivedAt = new Date();
-        } else if (newStatus === 'STARTED') {
+        // if (newStatus === 'ARRIVED') {
+        //     journey.arrivedAt = new Date();
+        // } else 
+            if (newStatus === 'STARTED') {
             journey.startedAt = new Date();
         }
 
         await journey.save();
         await journey.populate([
-            { path: 'riderId', select: 'name email phone' },
+            { path: 'riderId', select: 'name email phone socketId' },
             { path: 'driverId', populate: { path: 'userId', select: 'name email phone' } }
         ]);
 
@@ -559,7 +581,8 @@ class JourneyService {
                 _id: journey.riderId._id,
                 name: journey.riderId.name,
                 email: journey.riderId.email,
-                phone: journey.riderId.phone
+                phone: journey.riderId.phone,
+                socketId: journey.riderId.socketId // Include socketId for real-time notifications
             },
 
             driver: journey.driverId ? {

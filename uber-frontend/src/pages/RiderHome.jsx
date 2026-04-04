@@ -17,10 +17,15 @@ import {
   setRideOriginCoordinates,
   setRideOrigin,
 } from "../features/ride/rideSlice";
+import { useSocket } from "../hooks/useSocket";
+import { useNavigate } from "react-router-dom";
+
 
 const RiderHome = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  const { onEvent } = useSocket();
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
@@ -38,6 +43,8 @@ const RiderHome = () => {
   const vehicleFoundRef = useRef(null);
   const [waitingForDriver, setWaitingForDriver] = useState(false);
   const waitingForDriverRef = useRef(null);
+
+  const [journey, setJourney] = useState(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -62,6 +69,17 @@ const RiderHome = () => {
       setIsSuggestionsLoading(false);
       return;
     }
+
+    onEvent("journey-accepted", (journey) => {
+      setvehicleFound(false);
+      setWaitingForDriver(true);
+      setJourney(journey);
+    });
+
+    onEvent("journey-started", (journey) => {
+      setWaitingForDriver(false);
+      navigate("/riding", { state: { journey } });
+    });
 
     let isCancelled = false;
 
@@ -226,21 +244,22 @@ const RiderHome = () => {
 
   return (
     <div className="h-screen relative overflow-hidden">
+      {!panelOpen ? (
+        <div className="fixed top-0 left-0 w-full z-40 px-5 pt-4 pb-2 flex items-center justify-between">
+          <img
+            className="w-16 h-auto block"
+            src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
+            alt="Uber"
+          />
 
-      <div className="fixed top-0 left-0 w-full z-40 px-5 pt-4 pb-2 flex items-center justify-between">
-        <img
-          className="w-16 h-auto block"
-          src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
-          alt="Uber"
-        />
+          <i
+            onClick={() => setMenuOpen(true)}
+            className="ri-menu-fill text-2xl cursor-pointer"
+          ></i>
 
-        <i
-          onClick={() => setMenuOpen(true)}
-          className="ri-menu-fill text-2xl cursor-pointer"
-        ></i>
-
-        <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-      </div>
+          <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+        </div>
+      ) : null}
 
       <div
         className={`h-screen w-screen ${panelOpen ? "bg-white" : ""}`}
@@ -260,9 +279,9 @@ const RiderHome = () => {
       </div>
 
       {/* THis is the pickup and destination input container with location search panel means when we click on pickup and destination inpit fields then this container will open and also open the location search panel. */}
-      <div className=" flex flex-col justify-end h-screen absolute top-0 w-full ">
+      <div className="flex flex-col justify-end h-screen absolute top-0 w-full">
         {/* // this is the pickup and destination input container */}
-        <div className="h-[33%] p-6 bg-white relative z-3 ">
+        <div className="min-h-[33%] p-5 bg-white relative z-[3]">
           <h5
             ref={panelCloseRef}
             onClick={() => {
@@ -278,7 +297,7 @@ const RiderHome = () => {
               submitHandler(e);
             }}
           >
-            <div className="line absolute h-15 w-[1.2%] top-[50%] left-10 bg-gray-700 rounded-full"></div>
+            <div className="line absolute h-15 w-1 top-[35%] left-10 bg-gray-700 rounded-full"></div>
             <input
               onClick={() => {
                 setPanelOpen(true);
@@ -294,7 +313,7 @@ const RiderHome = () => {
                 setPickup(e.target.value);
                 dispatch(setRideOriginCoordinates(null));
               }}
-              className="bg-[#eee] px-11 py-2 text-lg rounded-lg w-full mt-4"
+              className="bg-[#eee] px-11 py-2 text-base rounded-lg w-full mt-4"
               type="text"
               placeholder="Add a pick-up location"
             />
@@ -313,7 +332,7 @@ const RiderHome = () => {
                 setDestination(e.target.value);
                 dispatch(setRideDestinationCoordinates(null));
               }}
-              className="bg-[#eee] px-11 py-2 text-lg rounded-lg w-full  mt-3"
+              className="bg-[#eee] px-11 py-2 text-base rounded-lg w-full mt-3"
               type="text"
               placeholder="Enter your destination"
             />
@@ -322,7 +341,7 @@ const RiderHome = () => {
               type="button"
               onClick={handleFindRideClick}
               disabled={!canOpenVehiclePanel}
-              className={`w-full mt-7 py-2 mb-5 rounded-lg text-white font-semibold transition ${
+              className={`w-full mt-5 py-2 mb-3 rounded-lg text-white font-semibold transition ${
                 canOpenVehiclePanel
                   ? "bg-black hover:bg-zinc-800"
                   : "bg-zinc-400 cursor-not-allowed"
@@ -375,7 +394,7 @@ const RiderHome = () => {
       {/* // this is the looking for driver panel */}
       <div
         ref={vehicleFoundRef}
-        className="fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-6 pt-12"
+        className={`fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-6 pt-12 ${vehicleFound ? "visible" : "invisible"}`}
       >
         <LookingForDriver
           setvehicleFound={setvehicleFound}
@@ -389,7 +408,12 @@ const RiderHome = () => {
         ref={waitingForDriverRef}
         className="fixed w-full z-10 bottom-0  bg-white px-3 py-6 pt-12"
       >
-        <WaitingForDriver setWaitingForDriver={setWaitingForDriver} />
+        <WaitingForDriver
+          journey={journey}
+          setvehicleFound={setvehicleFound}
+          waitingForDriver={waitingForDriver}
+          setWaitingForDriver={setWaitingForDriver}
+        />
       </div>
     </div>
   );

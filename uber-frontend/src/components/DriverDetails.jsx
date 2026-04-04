@@ -13,7 +13,7 @@ const DriverDetails = () => {
             <h4 className="text-lg font-medium ">{User?.name}</h4>
           </div>
           <div>
-            <h4 className="text-xl font-semibold">$2.50</h4>
+            <h4 className="text-xl font-semibold">₹310</h4>
             <p className="text-sm text-gray-600">Earned Today</p>
           </div>
         </div>
