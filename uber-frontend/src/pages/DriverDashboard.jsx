@@ -129,6 +129,7 @@ function DriverDashboard() {
     },
     [confirmRidePopupPanel],
   );
+  
 
   return (
     <div className="h-screen">
@@ -138,6 +139,7 @@ function DriverDashboard() {
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
           alt=""
         />
+
         <button
           onClick={handleLogout}
           className="h-10 w-10 bg-white flex items-center justify-center rounded-full"
@@ -153,7 +155,8 @@ function DriverDashboard() {
           alt=""
         />
       </div>
-      <div className="h-2/5 p-6">
+
+      <div className="h-1/2 p-4 overflow-y-auto">
         <DriverDetails />
       </div>
       <div

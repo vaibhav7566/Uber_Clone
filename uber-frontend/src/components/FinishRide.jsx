@@ -1,7 +1,37 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import API from '../services/api';
 
 const FinishRide = (props) => {
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const endRideHandler = async () => {
+    const journeyId = props.journey?._id;
+
+    if (!journeyId) {
+      toast.error("Journey not found");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await API.post(`/journey/${journeyId}/complete`, {});
+
+      if (response.data?.success) {
+        toast.success("Ride finished successfully");
+        props.setFinishRidePanel(false);
+        navigate("/driver/dashboard");
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Failed to finish ride";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div>
       <h5
@@ -23,7 +53,7 @@ const FinishRide = (props) => {
             alt=""
           />
           <div>
-            <h4 className="text-lg font-medium">John Doe</h4>
+            <h4 className="text-lg font-medium capitalize">{props.journey?.rider?.name || "John Doe"}</h4>
             <h5 className="text-sm text-gray-600">
               {" "}
               <span className="font-semibold text-gray-800">2.5 km</span> away
@@ -38,27 +68,27 @@ const FinishRide = (props) => {
           <div className="flex items-center gap-5 p-3 border-b-2 border-gray-200">
             <i className="ri-map-pin-fill text-lg "></i>
             <div>
-              <h3 className="font-medium text-lg">562/11-A</h3>
+              <h3 className="font-medium text-lg">Pickup</h3>
               <p className="text-small -mt-1 text-gray-600 ">
-                Kankariya Talab Ahmedabad
+                {props.journey?.pickup?.address || "Kankariya Talab Ahmedabad"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3 border-b-2 border-gray-200">
             <i className="ri-stop-fill text-lg"></i>
             <div>
-              <h3 className="font-medium text-lg">562/11-A</h3>
+              <h3 className="font-medium text-lg">Destination</h3>
               <p className="text-small -mt-1 text-gray-600 ">
-                Kankariya Talab Ahmedabad
+                {props.journey?.dropoff?.address || "Kankariya Talab Ahmedabad"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3 border-b-2 border-gray-200">
             <i className="ri-money-rupee-circle-fill"></i>
             <div>
-              <h3 className="font-medium text-lg">Select Payment Option</h3>
+              <h3 className="font-medium text-lg">Total Fare</h3>
               <button className="text-small -mt-1 text-gray-600 ">
-                bkejsbfkndn
+                {`Pay ₹${props.journey?.estimatedFare || 250} via ${props.journey?.paymentMethod}`}
               </button>
             </div>
           </div>
@@ -66,23 +96,13 @@ const FinishRide = (props) => {
         
 
        <div className="mt-2 w-full">
-
-        <Link
-          to={"/get/payment"}
-          onClick={() => {}}
-          className="w-full mt-2 px-3 text-lg bg-green-600 font-semibold text-white  py-2 rounded-lg"
-        >
-          Get Payment
-        </Link>
-        
-        
-            <Link
-          to={"/driver/dashboard"}
-          onClick={() => {}}
+            <button
+          onClick={endRideHandler}
+          disabled={isSubmitting}
           className="w-full mt-5 bg-green-600 text-lg font-semibold text-white flex justify-center py-3 rounded-lg"
         >
-          Finish Ride
-        </Link>
+          {isSubmitting ? "Finishing..." : "Finish Ride"}
+        </button>
         <p className='mt-7 text-xs '>Click on finish ride if you have completed the payment.</p>
       
        </div>

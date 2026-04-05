@@ -159,6 +159,7 @@ class DriverService {
   //   - Error if profile < 70% complete
   //   - Error if not verified by admin
   async updateStatus(userId, isOnline) {
+    
     // ============================================
     // STEP 1: Find driver profile
     // ============================================
@@ -199,19 +200,17 @@ class DriverService {
     // ============================================
     // STEP 3: Update status in database
     // ============================================
-    // Find driver by userId and update isOnline field
-    // $set: Update only isOnline field
-    // new: true → Return updated document
-    const updatedDriver = await Driver.findOneAndUpdate(
-      { userId }, // Find condition
-      { $set: { "status.isOnline": isOnline } }, // Update isOnline field
-      { new: true }, // Return updated document
-    ).populate("userId", "name email phone role");
+    // Set the nested field directly and save the document.
+    // This is more reliable than a query update for nested status fields.
+    driver.set("status.isOnline", isOnline);
+    await driver.save();
+
+    await driver.populate("userId", "name email phone role");
 
     // ============================================
     // STEP 4: Return formatted response
     // ============================================
-    return this.formatDriverResponse(updatedDriver);
+    return this.formatDriverResponse(driver);
   }
 
   // ============================================

@@ -180,7 +180,7 @@ class JourneyService {
 
         const driver = await Driver.findOne({ userId: driverId }).populate('userId');
 
-        console.log("Journey services ===> Driver details:", driver);
+        // console.log("Journey services ===> Driver details:", driver);
         if (!driver) {
             throw new Error('Driver not found');
         }
@@ -210,7 +210,7 @@ class JourneyService {
 
         // Assign driver and update status
         journey.driverId = driver._id;
-        console.log("Journey services ===> Assigned driver to journey:", journey.driverId, driverId);
+        // console.log("Journey services ===> Assigned driver to journey:", journey.driverId, driverId);
         journey.status = 'ACCEPTED';
         journey.acceptedAt = new Date();
 
@@ -350,7 +350,7 @@ class JourneyService {
         });
 
         await journey.populate([
-            { path: 'riderId', select: 'name email phone' },
+            { path: 'riderId', select: 'name email phone socketId' },
             { path: 'driverId', populate: { path: 'userId', select: 'name email phone' } }
         ]);
 

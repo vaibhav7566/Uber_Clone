@@ -16,11 +16,10 @@ const RidePopUp = (props) => {
         <div className="flex items-center justify-start gap-3 ">
           <img
             className="h-12 w-12 rounded-full object-cover "
-            src="https://imgs.search.brave.com/1RzVI4Bh8Vme04AJSqCVk66wDeDYkjV3hccATEFNWUo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM2/NTEwNjU5Ni9waG90/by9hZG9yYWJsZS10/ZWVuYWdlLWdpcmwt/bG9va2luZy1hdC10/aGUtY2FtZXJhLW91/dGRvb3JzLmpwZz9z/PTYxMng2MTImdz0w/Jms9MjAmYz1GQXhk/SjZPcmVHUTRRa2xB/aWJuVjRHbDRBRmtv/ZjFBT1VFT0NtWWRl/UU9ZPQ"
-            alt=""
+            src={props.ride?.riderId?.profilePicture || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
           />
           <div>
-            <h4 className="text-lg font-medium">{props.ride?.riderId?.name}</h4>
+            <h4 className="text-lg font-medium capitalize">{props.ride?.riderId?.name}</h4>
             <h5 className="text-sm text-gray-600">
               {" "}
               <span className="font-semibold text-gray-800">2.5 km</span> away

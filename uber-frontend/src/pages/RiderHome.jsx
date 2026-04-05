@@ -21,6 +21,7 @@ import { useSocket } from "../hooks/useSocket";
 import { useNavigate } from "react-router-dom";
 
 
+
 const RiderHome = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -268,14 +269,7 @@ const RiderHome = () => {
           setVehiclePanelOpen(false);
         }}
       >
-        {/* image for temporary use  */}
-        {!panelOpen ? (
-          <img
-            className="h-full w-full object-cover"
-            src="https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif"
-            alt=""
-          />
-        ) : null}
+       // MAP here
       </div>
 
       {/* THis is the pickup and destination input container with location search panel means when we click on pickup and destination inpit fields then this container will open and also open the location search panel. */}

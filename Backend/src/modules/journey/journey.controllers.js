@@ -210,7 +210,7 @@ export const createJourney = async (req, res) => {
         const journeyData = req.body;
         const journey = await journeyService.createJourney(userId, journeyData);
 
-        // console.log(journey);
+        console.log("Jounery Controller ===>> Created journey===>", journey);
 
         res.status(201).json({
             success: true,
@@ -225,19 +225,30 @@ export const createJourney = async (req, res) => {
             pickupLatitude,
             50,
         ); // 2km radius
-        
-        // console.log("Drivers in range===>", driversInRadius);
+
+        const matchingDrivers = driversInRadius.filter((driver) => {
+            const driverVehicleType = driver?.vehicleInfo?.vehicleType;
+            const requestedVehicleType = journey?.vehicleType;
+
+            return (
+                driverVehicleType === requestedVehicleType &&
+                Boolean(driver?.socketId)
+            );
+        });
+
+        console.log("Jounery Controller ===>> Drivers in range===>", driversInRadius);
+        console.log("Jounery Controller ===>> Matching vehicle drivers===>", matchingDrivers);
         
         journey.otp = "";
 
         const journeyWithUser = await Ride.findById(journey._id)
             .populate({ path: 'riderId', select: 'name email phone' });
 
-            console.log("Journey with user details===>", journeyWithUser);
+            console.log("Jounery Controller ===>>  journey with user details===>", journeyWithUser);
 
-       driversInRadius.map( (driver) => {
+       matchingDrivers.forEach((driver) => {
 
-        console.log(driver,journey);
+        console.log("Jounery Controller ===>> broadcast to drivers", driver,journey);
 
         sendMessageToSocketId(driver.socketId, {
             event: "new-journey",
@@ -490,11 +501,19 @@ export const completeJourney = async (req, res) => {
         const driverId = await getAuthenticatedDriverId(req);
         const completionData = { actualFare, distance, duration };
         const journey = await journeyService.completeJourney(journeyId, driverId, completionData);
+        
+        console.log("Journey completed:", journey);
+        sendMessageToSocketId(journey.rider.socketId, {   
+            event: 'journey-completed',
+            data: journey  
+          })
+
         res.status(200).json({
             success: true,
             data: journey,
             message: 'Journey completed successfully'
         });
+
     } catch (error) {
         console.error('Error in completeJourney:', error);
         res.status(500).json({
