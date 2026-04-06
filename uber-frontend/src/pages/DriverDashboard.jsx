@@ -14,6 +14,8 @@ import { useSocket } from "../hooks/useSocket";
 import axios from "axios";
 // import { socket } from "socket.io-client";
 // const { socket } = useSocket();
+import Map from "../components/Map";
+
 
 function DriverDashboard() {
   const navigate = useNavigate();
@@ -133,7 +135,7 @@ function DriverDashboard() {
 
   return (
     <div className="h-screen">
-      <div className="fixed p-6 top-0 flex itmes-center justify-between w-screen ">
+      <div className="fixed z-1 p-6 top-0 flex itmes-center justify-between w-screen ">
         <img
           className="w-16 h-6"
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
@@ -149,11 +151,7 @@ function DriverDashboard() {
       </div>
 
       <div className="h-3/5">
-        <img
-          className="h-full w-full object-cover"
-          src="https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif"
-          alt=""
-        />
+        <Map/>
       </div>
 
       <div className="h-1/2 p-4 overflow-y-auto">

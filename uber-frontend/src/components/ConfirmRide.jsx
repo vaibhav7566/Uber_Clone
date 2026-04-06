@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createRide } from "../features/ride/currentRideSlice";
+import { toast } from "react-toastify";
 
 const ConfirmRide = (props) => {
   const dispatch = useDispatch();
@@ -15,6 +16,22 @@ const ConfirmRide = (props) => {
       return;
     }
 
+    const estimatedFare = Number(selectedVehicle.estimatedFare);
+    const distance = Number(selectedVehicle.distanceKm);
+    const duration = Number(selectedVehicle.durationMin);
+
+    if (
+      !Number.isFinite(estimatedFare) ||
+      !Number.isFinite(distance) ||
+      !Number.isFinite(duration) ||
+      estimatedFare <= 0 ||
+      distance <= 0 ||
+      duration <= 0
+    ) {
+      toast.error("Fare details unavailable. Please select locations again.");
+      return;
+    }
+
     const payload = {
       pickupAddress: props.pickupLocation,
       pickupCoordinates: [originCoordinates.lng, originCoordinates.lat],
@@ -22,9 +39,9 @@ const ConfirmRide = (props) => {
       dropoffCoordinates: [destinationCoordinates.lng, destinationCoordinates.lat],
       vehicleType: selectedVehicle.vehicleType,
       paymentMethod: paymentMethod.toUpperCase(),
-      estimatedFare: Number(selectedVehicle.estimatedFare),
-      distance: Number(selectedVehicle.distanceKm),
-      duration: Number(selectedVehicle.durationMin),
+      estimatedFare,
+      distance,
+      duration,
     };
 
     try {

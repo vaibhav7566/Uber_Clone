@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useSocket } from "../hooks/useSocket";
+import Map from "../components/Map";
 
 const Riding = () => {
   const location = useLocation();
@@ -37,11 +38,7 @@ const Riding = () => {
 
               </div>
       <div className="h-1/2">
-        <img
-          className="h-full w-full object-cover"
-          src="https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif"
-          alt=""
-        />
+       <Map/>
       </div>
       <div className="h-1/2 p-4 mb-2">
         <div className="flex items-center justify-between">

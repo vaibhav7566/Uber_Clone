@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+.mapboxgl-ctrl-top-right {
+  top: 48.5% !important;
+  transform: translateY(-50%);
+  right: 10px;
+}

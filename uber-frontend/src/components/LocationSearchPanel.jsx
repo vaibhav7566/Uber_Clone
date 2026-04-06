@@ -31,7 +31,11 @@ const LocationSearchPanel = (props) => {
         return (
           <div
             key={suggestion.placeId || `${description}-${index}`}
-            onClick={() => handleSuggestionClick(suggestion)}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSuggestionClick(suggestion);
+            }}
             className="flex items-center justify-start gap-4 my-3 border-gray-200 active:border-gray-700 border-2 rounded-xl px-3 py-2 cursor-pointer"
           >
             <h2>

@@ -17,8 +17,10 @@ import {
   setRideOriginCoordinates,
   setRideOrigin,
 } from "../features/ride/rideSlice";
+import { logout } from "../features/auth/authSlice";
 import { useSocket } from "../hooks/useSocket";
 import { useNavigate } from "react-router-dom";
+import Map from "../components/Map";
 
 
 
@@ -26,7 +28,7 @@ const RiderHome = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { onEvent } = useSocket();
+  const { onEvent, offEvent } = useSocket();
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
@@ -48,9 +50,23 @@ const RiderHome = () => {
   const [journey, setJourney] = useState(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [interactionMode, setInteractionMode] = useState("map");
+
+  const showMapControls =
+    !panelOpen &&
+    !vehiclePanelOpen &&
+    !confirmRidePanel &&
+    !vehicleFound &&
+    !waitingForDriver;
 
   const submitHandler = (e) => {
     e.preventDefault();
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setMenuOpen(false);
+    navigate("/login");
   };
 
   const canOpenVehiclePanel = pickup.trim() && destination.trim();
@@ -70,17 +86,6 @@ const RiderHome = () => {
       setIsSuggestionsLoading(false);
       return;
     }
-
-    onEvent("journey-accepted", (journey) => {
-      setvehicleFound(false);
-      setWaitingForDriver(true);
-      setJourney(journey);
-    });
-
-    onEvent("journey-started", (journey) => {
-      setWaitingForDriver(false);
-      navigate("/riding", { state: { journey } });
-    });
 
     let isCancelled = false;
 
@@ -108,6 +113,28 @@ const RiderHome = () => {
       clearTimeout(timerId);
     };
   }, [pickup, destination, activeField, panelOpen]);
+
+  useEffect(() => {
+    const handleJourneyAccepted = (journey) => {
+      setvehicleFound(false);
+      setWaitingForDriver(true);
+      setJourney(journey);
+      console.log("Received journey-accepted event with journey data:", journey);
+    };
+
+    const handleJourneyStarted = (journey) => {
+      setWaitingForDriver(false);
+      navigate("/riding", { state: { journey } });
+    };
+
+    onEvent("journey-accepted", handleJourneyAccepted);
+    onEvent("journey-started", handleJourneyStarted);
+
+    return () => {
+      offEvent("journey-accepted");
+      offEvent("journey-started");
+    };
+  }, [onEvent, offEvent, navigate]);
 
   const handleSuggestionSelect = (suggestion) => {
     const selectedAddress =
@@ -147,6 +174,17 @@ const RiderHome = () => {
 
     setPanelOpen(false);
     setVehiclePanelOpen(true);
+  };
+
+  const handleMapPickupUpdate = (address, coordinates) => {
+    setPickup(address || "");
+    dispatch(setRideOriginCoordinates(coordinates || null));
+    setActiveField("destination");
+  };
+
+  const handleMapDestinationUpdate = (address, coordinates) => {
+    setDestination(address || "");
+    dispatch(setRideDestinationCoordinates(coordinates || null));
   };
 
   // it is used to open and close the location search panel
@@ -258,24 +296,43 @@ const RiderHome = () => {
             className="ri-menu-fill text-2xl cursor-pointer"
           ></i>
 
-          <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+          <Sidebar
+            menuOpen={menuOpen}
+            setMenuOpen={setMenuOpen}
+            onLogout={handleLogout}
+          />
         </div>
       ) : null}
 
       <div
         className={`h-screen w-screen ${panelOpen ? "bg-white" : ""}`}
         onClick={() => {
+          setInteractionMode("map");
           setPanelOpen(false);
           setVehiclePanelOpen(false);
         }}
       >
-       // MAP here
+      <Map
+        setPickup={handleMapPickupUpdate}
+        setDestination={handleMapDestinationUpdate}
+        showControls={showMapControls}
+        interactionMode={interactionMode}
+        setInteractionMode={setInteractionMode}
+      />
       </div>
 
       {/* THis is the pickup and destination input container with location search panel means when we click on pickup and destination inpit fields then this container will open and also open the location search panel. */}
-      <div className="flex flex-col justify-end h-screen absolute top-0 w-full">
+      {/* <div className="flex flex-col justify-end h-screen absolute top-0 w-full"> */}
+      <div className="flex flex-col justify-end h-screen absolute top-0 w-full pointer-events-none">
         {/* // this is the pickup and destination input container */}
-        <div className="min-h-[33%] p-5 bg-white relative z-[3]">
+        {/* <div className="min-h-[33%] p-5 bg-white relative z-[3]"> */}
+        <div
+          className="min-h-[33%] p-5 bg-white relative z-3 pointer-events-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            setInteractionMode("input");
+          }}
+        >
           <h5
             ref={panelCloseRef}
             onClick={() => {
@@ -294,10 +351,12 @@ const RiderHome = () => {
             <div className="line absolute h-15 w-1 top-[35%] left-10 bg-gray-700 rounded-full"></div>
             <input
               onClick={() => {
+                setInteractionMode("input");
                 setPanelOpen(true);
                 setActiveField("pickup");
               }}
               onFocus={() => {
+                setInteractionMode("input");
                 setPanelOpen(true);
                 setActiveField("pickup");
               }}
@@ -313,10 +372,12 @@ const RiderHome = () => {
             />
             <input
               onClick={() => {
+                setInteractionMode("input");
                 setPanelOpen(true);
                 setActiveField("destination");
               }}
               onFocus={() => {
+                setInteractionMode("input");
                 setPanelOpen(true);
                 setActiveField("destination");
               }}
@@ -347,13 +408,21 @@ const RiderHome = () => {
         </div>
 
         {/* // this is the location search panel */}
-        <div ref={panelRef} className="bg-white h-0 overflow-y-auto ">
+        <div
+          ref={panelRef}
+          className="bg-white h-0 overflow-y-auto pointer-events-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            setInteractionMode("input");
+          }}
+        >
           <LocationSearchPanel
             // setPanelOpen={setPanelOpen}
             // setVehiclePanelOpen={setVehiclePanelOpen}
             suggestions={locationSuggestions}
             loading={isSuggestionsLoading}
             onSelectSuggestion={handleSuggestionSelect}
+            onInteract={() => setInteractionMode("input")}
           />
         </div>
       </div>

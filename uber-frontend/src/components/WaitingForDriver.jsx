@@ -1,6 +1,7 @@
 import React from 'react'
 
 const WaitingForDriver = (props) => {
+  // console.log("WaitingForDriver => Received journey prop:", props.journey);
   return (
     <div>
       <h5
