@@ -21,6 +21,7 @@ import { logout } from "../features/auth/authSlice";
 import { useSocket } from "../hooks/useSocket";
 import { useNavigate } from "react-router-dom";
 import Map from "../components/Map";
+import { toast } from "react-toastify";
 
 
 
@@ -127,12 +128,22 @@ const RiderHome = () => {
       navigate("/riding", { state: { journey } });
     };
 
+    const handleJourneyCancelled = () => {
+      setJourney(null);
+      setvehicleFound(false);
+      setWaitingForDriver(false);
+      toast.error("Journey cancelled by driver");
+      navigate("/rider/home", { replace: true });
+    };
+
     onEvent("journey-accepted", handleJourneyAccepted);
     onEvent("journey-started", handleJourneyStarted);
+    onEvent("journey-cancelled", handleJourneyCancelled);
 
     return () => {
       offEvent("journey-accepted");
       offEvent("journey-started");
+      offEvent("journey-cancelled");
     };
   }, [onEvent, offEvent, navigate]);
 

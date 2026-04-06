@@ -547,17 +547,12 @@ export const completeJourney = async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - reason
  *               - cancelledBy
  *             properties:
- *               reason:
- *                 type: string
- *                 minLength: 5
- *                 maxLength: 500
- *                 example: "Driver is taking too long"
  *               cancelledBy:
  *                 type: string
  *                 enum: [RIDER, DRIVER]
+ *                 example: "RIDER"
  *     responses:
  *       200:
  *         description: Journey cancelled successfully
@@ -587,9 +582,60 @@ export const completeJourney = async (req, res) => {
 export const cancelJourney = async (req, res) => {
     try {
         const { journeyId } = req.params;
-        const { reason, cancelledBy } = req.body;
-        const userId = req.user._id;
-        const journey = await journeyService.cancelJourney(journeyId, userId, reason, cancelledBy);
+        const { cancelledBy } = req.body;
+        const actorId =
+            cancelledBy === 'DRIVER'
+                ? await getAuthenticatedDriverId(req)
+                : req.user._id;
+
+        const journey = await journeyService.cancelJourney(journeyId, actorId, cancelledBy);
+
+        if (cancelledBy === 'RIDER') {
+            const acceptedDriverId = journey?.driver?._id;
+
+            if (acceptedDriverId) {
+                const acceptedDriver = await Driver.findById(acceptedDriverId).select('socketId');
+
+                if (acceptedDriver?.socketId) {
+                    sendMessageToSocketId(acceptedDriver.socketId, {
+                        event: 'journey-cancelled-by-rider',
+                        data: journey,
+                    });
+                }
+            } else {
+                const pickupLongitude = journey.pickup.location.coordinates[0];
+                const pickupLatitude = journey.pickup.location.coordinates[1];
+
+                const driversInRadius = await mapsService.getDriversInRadius(
+                    pickupLongitude,
+                    pickupLatitude,
+                    50,
+                );
+
+                const matchingDrivers = driversInRadius.filter((driver) => {
+                    const driverVehicleType = driver?.vehicleInfo?.vehicleType;
+                    return (
+                        driverVehicleType === journey?.vehicleType &&
+                        Boolean(driver?.socketId)
+                    );
+                });
+
+                matchingDrivers.forEach((driver) => {
+                    sendMessageToSocketId(driver.socketId, {
+                        event: 'journey-cancelled-by-rider',
+                        data: journey,
+                    });
+                });
+            }
+        }
+
+        if (cancelledBy === 'DRIVER' && journey?.rider?.socketId) {
+            sendMessageToSocketId(journey.rider.socketId, {
+                event: 'journey-cancelled',
+                data: journey,
+            });
+        }
+
         res.status(200).json({
             success: true,
             data: journey,

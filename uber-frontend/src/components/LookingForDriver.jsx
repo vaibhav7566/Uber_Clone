@@ -1,8 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import API from '../services/api';
 
 const LookingForDriver = (props) => {
   const finalRide = useSelector((state) => state.currentRide.currentRide);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const pickupAddress = finalRide?.pickup?.address || props.pickupLocation || "-";
   const dropoffAddress = finalRide?.dropoff?.address || props.destinationLocation || "-";
@@ -13,6 +16,31 @@ const LookingForDriver = (props) => {
       : null;
   const distanceText =
     typeof finalRide?.distance === "number" ? `${finalRide.distance} km` : "-";
+
+  const handleCancelRide = async () => {
+    if (!finalRide?._id) {
+      toast.error("Journey not found");
+      return;
+    }
+
+    try {
+      setIsCancelling(true);
+      const response = await API.post(`/journey/${finalRide._id}/cancel`, {
+        cancelledBy: "RIDER",
+      });
+
+      if (response.data?.success) {
+        props.setvehicleFound(false);
+        toast.success("Ride cancelled successfully");
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to cancel ride";
+      toast.error(errorMessage);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   return (
     <div>
@@ -79,6 +107,12 @@ const LookingForDriver = (props) => {
               </button>
             </div>
           </div>
+
+          <div className='w-full mt-2 flex justify-center'  >
+              <button className="text-md mt-1 px-10 py-2 font-bold leading-tight border-gray-400 border rounded-lg text-red-600 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleCancelRide} disabled={isCancelling}>
+                {isCancelling ? "Cancelling..." : "Cancel Ride"}
+              </button>
+            </div>
         </div>
         
       </div>

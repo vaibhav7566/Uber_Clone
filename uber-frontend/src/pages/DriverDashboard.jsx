@@ -88,6 +88,34 @@ function DriverDashboard() {
     };
   }, [isConnected, authState.role, onEvent, offEvent]);
 
+  useEffect(() => {
+    if (!isConnected || authState.role !== "DRIVER") {
+      return;
+    }
+
+    onEvent("journey-cancelled-by-rider", (data) => {
+      const cancelledJourneyId = data?._id;
+
+      if (!cancelledJourneyId) {
+        return;
+      }
+
+      if (ride?._id && ride._id !== cancelledJourneyId) {
+        return;
+      }
+
+      setRide(null);
+      setRidePopupPanel(false);
+      setConfirmRidePopupPanel(false);
+      toast.error("Journey cancelled by rider");
+      navigate("/driver/dashboard", { replace: true });
+    });
+
+    return () => {
+      offEvent("journey-cancelled-by-rider");
+    };
+  }, [isConnected, authState.role, onEvent, offEvent, ride?._id, navigate]);
+
     const confirmRide = async () => {
       if (!ride || !ride._id) {
         console.error("Invalid ride data");

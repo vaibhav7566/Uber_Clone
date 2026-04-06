@@ -60,6 +60,34 @@ const ConfirmRidePopup = (props) => {
     }
   };
 
+  const handleCancelJourney = async () => {
+    if (!props.ride?._id) {
+      toast.error("Journey not found");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await API.post(`/journey/${props.ride._id}/cancel`, {
+        cancelledBy: "DRIVER",
+      });
+
+      if (response.data?.success) {
+        setOtp("");
+        props.setConfirmRidePopupPanel(false);
+        props.setRidePopupPanel(false);
+        toast.success("Journey cancelled");
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to cancel journey";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div>
       {/* <h5
@@ -153,11 +181,7 @@ const ConfirmRidePopup = (props) => {
 
             <button
               type="button"
-              onClick={() => {
-                setOtp("");
-                props.setConfirmRidePopupPanel(false);
-                props.setRidePopupPanel(false);
-              }}
+              onClick={handleCancelJourney}
               disabled={isSubmitting}
               className="w-full mt-2  bg-red-500 font-semibold text-white  py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >

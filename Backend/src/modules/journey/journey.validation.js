@@ -191,17 +191,6 @@ export const completeJourneySchema = z.object({
 export const cancelJourneySchema = z.object({
     body: z.object({
         // ============================================
-        // CANCELLATION REASON
-        // ============================================
-        reason: z
-            .string({
-                required_error: 'Cancellation reason is required'
-            })
-            .min(5, 'Reason must be at least 5 characters')
-            .max(500, 'Reason cannot exceed 500 characters')
-            .trim(),
-
-        // ============================================
         // WHO CANCELLED
         // ============================================
         cancelledBy: z

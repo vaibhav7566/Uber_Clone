@@ -101,7 +101,7 @@ router.get(
 // POST /api/journey/:journeyId/cancel
 // Access: Private (Journey rider only)
 // Purpose: Cancel journey as rider
-// request body: { cancellationReason ,cancelledBy: 'RIDER' }
+// request body: { cancelledBy: 'RIDER' }
 // Note: Journey can only be cancelled if status is REQUESTED or ACCEPTED. Once driver has started the journey, it cannot be cancelled by rider.
 router.post(
   "/:journeyId/cancel",

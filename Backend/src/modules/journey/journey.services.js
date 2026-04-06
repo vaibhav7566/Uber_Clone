@@ -371,11 +371,10 @@ class JourneyService {
     // Parameters:
     //   - journeyId: ObjectId of Ride (Journey)
     //   - userId: ObjectId of User (rider) or Driver
-    //   - reason: Cancellation reason
     //   - cancelledBy: 'RIDER' or 'DRIVER'
     //
     // Returns: Updated journey object
-    async cancelJourney(journeyId, userId, reason, cancelledBy) {
+    async cancelJourney(journeyId, userId, cancelledBy) {
         const journey = await Ride.findById(journeyId);
 
         if (!journey) {
@@ -398,12 +397,12 @@ class JourneyService {
         // Update journey
         journey.status = 'CANCELLED';
         journey.cancelledAt = new Date();
-        journey.cancellationReason = reason;
+        journey.cancellationReason = null;
         journey.cancelledBy = cancelledBy;
 
         await journey.save();
         await journey.populate([
-            { path: 'riderId', select: 'name email phone' },
+            { path: 'riderId', select: 'name email phone socketId' },
             { path: 'driverId', populate: { path: 'userId', select: 'name email phone' } }
         ]);
 
