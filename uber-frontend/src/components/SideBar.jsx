@@ -46,7 +46,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({ menuOpen, setMenuOpen }) => {
+const Sidebar = ({ menuOpen, setMenuOpen, onLogout }) => {
   const navigate = useNavigate();
 
   return (
@@ -78,24 +78,42 @@ const Sidebar = ({ menuOpen, setMenuOpen }) => {
             </button>
           </div>
 
-          {/* MENU ITEMS */}
-          <div className="flex flex-col gap-6 mt-6 text-lg">
-            <button className="flex items-center gap-3 hover:text-gray-600">
-              <i className="ri-user-line text-xl"></i>
-              Profile
-            </button>
+          
+                <div className="flex flex-col gap-6 mt-6 text-lg">
+                <button 
+                  onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/rider-profile");
+                  }} 
+                  className="flex items-center gap-3 hover:text-gray-600"
+                >
+                  <i className="ri-user-line text-xl"></i>
+                  Profile
+                </button>
 
-            <button className="flex items-center gap-3 hover:text-gray-600">
-              <i className="ri-file-list-3-line text-xl"></i>
-              Activity History
-            </button>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate("/activity-history");
+                  }}
+                  className="flex items-center gap-3 hover:text-gray-600"
+                >
+                  <i className="ri-file-list-3-line text-xl"></i>
 
-            <button className="flex items-center gap-3 hover:text-gray-600">
-              <i className="ri-customer-service-2-line text-xl"></i>
-              Services
-            </button>
+                  Activity History
+                </button>
 
-            {/* ADMIN DASHBOARD - Only for ADMIN role */}
+                <button onClick={() => {
+                    setMenuOpen(false);
+                    navigate("/services");
+                  }} className="flex items-center gap-3 hover:text-gray-600">
+                   
+                  
+                  <i className="ri-customer-service-2-line text-xl"></i>
+                  Services
+                </button>
+
+                {/* ADMIN DASHBOARD - Only for ADMIN role */}
             {/* {role === "ADMIN" && (
               <button 
                 onClick={() => {
@@ -137,7 +155,15 @@ const Sidebar = ({ menuOpen, setMenuOpen }) => {
               </button>
             {/* )} */}
 
-            <button className="flex items-center gap-3 text-red-500 hover:text-red-600 mt-auto">
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                if (typeof onLogout === "function") {
+                  onLogout();
+                }
+              }}
+              className="flex items-center gap-3 text-red-500 hover:text-red-600 mt-auto"
+            >
               <i className="ri-logout-box-r-line text-xl"></i>
               Logout
             </button>

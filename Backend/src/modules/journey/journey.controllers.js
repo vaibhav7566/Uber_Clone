@@ -909,7 +909,7 @@ export const generatePaymentQR = async (req, res) => {
  * /api/journey/{journeyId}/confirm-payment:
  *   post:
  *     summary: Confirm payment (Rider)
- *     description: Marks the journey payment as completed. Idempotent — safe to call multiple times; returns `alreadyPaid: true` if already paid.
+ *     description: "Marks the journey payment as completed. Idempotent and safe to call multiple times; returns alreadyPaid true if already paid."
  *     tags:
  *       - Journey
  *     security:

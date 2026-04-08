@@ -57,6 +57,7 @@ export const createDriverProfileSchema = z.object({
         "KOLKATA",
         "PUNE",
         "AHMEDABAD",
+        "Bhopal",
       ],
       {
         required_error: "City is required", // Error if missing
@@ -85,8 +86,8 @@ export const createDriverProfileSchema = z.object({
       .string({
         required_error: "License number is required", // Error if missing
       })
-      .min(8, "License number must be at least 8 characters") // Minimum length
-      .max(20, "License number cannot exceed 20 characters") // Maximum length
+      .min(14, "License number must be at least 14 characters") // Minimum length
+      .max(18, "License number cannot exceed 18 characters") // Maximum length
       .trim(), // Remove leading/trailing spaces
 
     // ============================================
@@ -103,17 +104,17 @@ export const createDriverProfileSchema = z.object({
       }, "License expiry date must be in the future"),
 
     // ============================================
-    // RC NUMBER
+    // VEHICLE NUMBER
     // ============================================
-    // Vehicle Registration Certificate number
+    // Vehicle registration number
     // Must be 8-15 characters
     // Example: "MH01AB1234"
-    rcNumber: z
+    vehicleNumber: z
       .string({
-        required_error: "RC number is required", // Error if missing
+        required_error: "Vehicle number is required", // Error if missing
       })
-      .min(8, "RC number must be at least 8 characters") // Minimum length
-      .max(15, "RC number cannot exceed 15 characters") // Maximum length
+      .min(8, "Vehicle number must be at least 8 characters") // Minimum length
+      .max(15, "Vehicle number cannot exceed 15 characters") // Maximum length
       .trim(), // Remove leading/trailing spaces
 
     // ============================================
@@ -140,24 +141,6 @@ export const createDriverProfileSchema = z.object({
         invalid_type_error: "Invalid vehicle type", // Error if not in enum
       },
     ),
-
-    // ============================================
-    // VEHICLE NUMBER (OPTIONAL)
-    // ============================================
-    // Must match Indian vehicle number format if provided
-    // Format: XX00XX0000 (e.g., MH01AB1234)
-    // XX = State code (2 letters)
-    // 00 = District code (2 digits)
-    // XX = Series (1-2 letters)
-    // 0000 = Number (4 digits)
-    vehicleNumber: z
-      .string()
-      .optional() // Field is optional
-      .refine((val) => {
-        if (!val) return true; // Skip validation if not provided
-        // Regex: 2 letters + 2 digits + 1-2 letters + 4 digits
-        return /^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/.test(val);
-      }, "Invalid vehicle number format (e.g., MH01AB1234)"),
 
     // ============================================
     // VEHICLE MODEL (OPTIONAL)

@@ -22,8 +22,8 @@ function DriverRegistration() {
 
   const stepFields = [
     ["languagePreference", "city", "aadharNumber"], // profilePicture is optional
-    ["licenseNumber", "rcNumber"], // expiry dates are optional
-    ["vehicleType"], // vehicleNumber, vehicleModel, vehicleColor are optional
+    ["licenseNumber", "vehicleNumber"], // expiry dates are optional
+    ["vehicleType"], // vehicleModel, vehicleColor are optional
   ];
 
   const handleNext = async () => {
@@ -32,6 +32,10 @@ function DriverRegistration() {
       setFormData((prev) => ({ ...prev, ...getValues() }));
       setCurrentStep((s) => s + 1);
     }
+  };
+
+  const handleBack = () => {
+    setCurrentStep((s) => Math.max(0, s - 1));
   };
 
   const onSubmit = async (data) => {
@@ -196,7 +200,7 @@ function DriverRegistration() {
                       defaultValue=""
                     >
                       <option value="" disabled>Select city</option>
-                      {["MUMBAI","DELHI","BANGALORE","HYDERABAD","CHENNAI","KOLKATA","PUNE","AHMEDABAD"].map((c) => (
+                      {["MUMBAI","DELHI","BANGALORE","HYDERABAD","CHENNAI","KOLKATA","PUNE","AHMEDABAD","Bhopal"].map((c) => (
                         <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>
                       ))}
                     </select>
@@ -271,15 +275,15 @@ function DriverRegistration() {
 
                 <div>
                   <label className="block text-sm font-medium text-black mb-1.5">
-                    Vehicle RC Number
+                    Vehicle Number
                   </label>
                   <input
-                    {...register("rcNumber", { required: "RC number is required" })}
+                    {...register("vehicleNumber", { required: "Vehicle number is required" })}
                     placeholder="e.g. CG04-2024-00098765"
-                    className={inputClass(errors.rcNumber)}
+                    className={inputClass(errors.vehicleNumber)}
                   />
-                  {errors.rcNumber && (
-                    <p className="text-red-500 text-xs mt-1">{errors.rcNumber.message}</p>
+                  {errors.vehicleNumber && (
+                    <p className="text-red-500 text-xs mt-1">{errors.vehicleNumber.message}</p>
                   )}
                 </div>
 
@@ -328,18 +332,6 @@ function DriverRegistration() {
                   {errors.vehicleType && (
                     <p className="text-red-500 text-xs mt-1">{errors.vehicleType.message}</p>
                   )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1.5">
-                    Vehicle Number{" "}
-                    <span className="text-gray-400 font-normal">(optional)</span>
-                  </label>
-                  <input
-                    {...register("vehicleNumber")}
-                    placeholder="e.g. MH12AB1234"
-                    className={inputClass(false)}
-                  />
                 </div>
 
                 <div>

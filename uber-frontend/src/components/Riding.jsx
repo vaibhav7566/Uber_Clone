@@ -43,9 +43,9 @@ const Riding = () => {
       <div className="h-1/2 p-4 mb-2">
         <div className="flex items-center justify-between">
           <img
-            className="h-12"
-            src="https://swyft.pl/wp-content/uploads/2023/05/how-many-people-can-a-uberx-take.jpg"
-            alt=""
+            className="h-12 w-12 rounded-full object-cover"
+            src={journey?.driver?.profilePicture || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+            alt="Driver"
           />
           <div className="text-right">
             <h2 className="text-lg font-medium capitalize">{journey?.driver?.name || "Driver"}</h2>

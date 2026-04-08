@@ -63,7 +63,6 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-userSchema.index({ email: 1 }); // creates an index on the email field to improve query performance when searching for users by email.
 userSchema.index({ socketId: 1 });
 
 userSchema.pre("save", async function () {

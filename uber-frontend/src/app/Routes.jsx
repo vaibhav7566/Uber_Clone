@@ -35,6 +35,9 @@ import PublicRoute from "../components/PublicRoute";
 import Riding from "../components/Riding";
 import DriverRegistration from "../pages/DriverRegistration";
 import DriverRiding from "../pages/DriverRiding";
+import RiderProfile from "../components/RiderProfile";
+import Services from "../components/Services";
+import ActivityHistory from "../pages/ActivityHistory";
 
 export const router = createBrowserRouter([
   // Signup route (only accessible to unauthenticated users)
@@ -83,6 +86,36 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Riding />
+      </ProtectedRoute>
+    ),
+  },
+
+  //Rider profile page (only accessible to authenticated users with RIDER role)
+  {
+    path: "/rider-profile",
+    element: (
+      <ProtectedRoute requiredRole="RIDER"> 
+        <RiderProfile />
+      </ProtectedRoute>
+    ),
+  },
+
+  // Services page (only accessible to authenticated users with RIDER role)
+  {
+    path: "/services",
+    element: (
+      <ProtectedRoute requiredRole="RIDER"> 
+        <Services />
+      </ProtectedRoute>
+    ),
+  },
+
+  // Activity history page (only accessible to authenticated users with RIDER role)
+  {
+    path: "/activity-history",
+    element: (
+      <ProtectedRoute requiredRole="RIDER">
+        <ActivityHistory />
       </ProtectedRoute>
     ),
   },

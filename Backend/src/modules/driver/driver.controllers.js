@@ -48,7 +48,7 @@ import { driverService } from "./driver.services.js";
  *               type: string
  *               format: date
  *               nullable: true
- *             rcNumber:
+ *             vehicleNumber:
  *               type: string
  *             rcExpiry:
  *               type: string
@@ -60,9 +60,6 @@ import { driverService } from "./driver.services.js";
  *             vehicleType:
  *               type: string
  *               enum: [CAR, BIKE, AUTO, E_RICKSHAW, ELECTRIC_SCOOTER]
- *             vehicleNumber:
- *               type: string
- *               nullable: true
  *             vehicleModel:
  *               type: string
  *               nullable: true
@@ -94,7 +91,7 @@ import { driverService } from "./driver.services.js";
  * /api/driver/profile:
  *   post:
  *     summary: Create driver profile
- *     description: Creates a new driver profile for the authenticated DRIVER user. Requires at minimum language preference, city, aadhar, license, RC number, and vehicle type.
+ *     description: Creates a new driver profile for the authenticated DRIVER user. Requires at minimum language preference, city, aadhar, license, vehicle number, and vehicle type.
  *     tags:
  *       - Driver
  *     security:
@@ -110,7 +107,7 @@ import { driverService } from "./driver.services.js";
  *               - city
  *               - aadharNumber
  *               - licenseNumber
- *               - rcNumber
+ *               - vehicleNumber
  *               - vehicleType
  *             properties:
  *               languagePreference:
@@ -125,7 +122,7 @@ import { driverService } from "./driver.services.js";
  *                 description: 12-digit Aadhar number
  *               licenseNumber:
  *                 type: string
- *               rcNumber:
+ *               vehicleNumber:
  *                 type: string
  *               vehicleType:
  *                 type: string
@@ -144,7 +141,7 @@ import { driverService } from "./driver.services.js";
  *             city: "MUMBAI"
  *             aadharNumber: "123456789012"
  *             licenseNumber: "MH1234567890"
- *             rcNumber: "MH01AB1234"
+ *             vehicleNumber: "MH01AB1234"
  *             vehicleType: "CAR"
  *             vehicleModel: "Honda City"
  *             vehicleColor: "White"
@@ -209,7 +206,7 @@ import { driverService } from "./driver.services.js";
 //     "city": "MUMBAI",
 //     "aadharNumber": "123456789012",
 //     "licenseNumber": "MH1234567890",
-//     "rcNumber": "MH01AB1234",
+//     "vehicleNumber": "MH01AB1234",
 //     "vehicleType": "CAR",
 //     "vehicleModel": "Honda City",        // Optional
 //     "vehicleColor": "White",             // Optional

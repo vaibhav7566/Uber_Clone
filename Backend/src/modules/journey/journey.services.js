@@ -589,9 +589,10 @@ class JourneyService {
                 name: journey.driverId.userId.name,
                 email: journey.driverId.userId.email,
                 phone: journey.driverId.userId.phone,
+                profilePicture: journey.driverId.personalInformation?.profilePicture,
                 vehicleModel: journey.driverId.vehicleInfo.vehicleModel,
                 vehicleColor: journey.driverId.vehicleInfo.vehicleColor,
-                vehicleNumber: journey.driverId.vehicleInfo.vehicleNumber,
+                vehicleNumber: journey.driverId.documents.vehicleNumber,
                 rating: journey.driverId.stats.rating
             } : null,
 

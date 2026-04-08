@@ -65,13 +65,12 @@ class DriverService {
       documents: {
         licenseNumber: profileData.licenseNumber,
         licenseExpiry: profileData.licenseExpiry || null,
-        rcNumber: profileData.rcNumber,
+        vehicleNumber: profileData.vehicleNumber,
         rcExpiry: profileData.rcExpiry || null,
       },
 
       vehicleInfo: {
         vehicleType: profileData.vehicleType,
-        vehicleNumber: profileData.vehicleNumber || null,
         vehicleModel: profileData.vehicleModel || null,
         vehicleColor: profileData.vehicleColor || null,
       },
@@ -326,7 +325,7 @@ class DriverService {
 
     // Vehicle info updates
     if (updateData.vehicleNumber) {
-      updates["vehicleInfo.vehicleNumber"] = updateData.vehicleNumber;
+      updates["documents.vehicleNumber"] = updateData.vehicleNumber;
     }
     if (updateData.vehicleModel) {
       updates["vehicleInfo.vehicleModel"] = updateData.vehicleModel;
@@ -397,14 +396,13 @@ class DriverService {
       documents: {
         licenseNumber: driver.documents.licenseNumber,
         licenseExpiry: driver.documents.licenseExpiry,
-        rcNumber: driver.documents.rcNumber,
+        vehicleNumber: driver.documents.vehicleNumber,
         rcExpiry: driver.documents.rcExpiry,
       },
 
       // Vehicle information
       vehicleInfo: {
         vehicleType: driver.vehicleInfo.vehicleType,
-        vehicleNumber: driver.vehicleInfo.vehicleNumber,
         vehicleModel: driver.vehicleInfo.vehicleModel,
         vehicleColor: driver.vehicleInfo.vehicleColor,
       },

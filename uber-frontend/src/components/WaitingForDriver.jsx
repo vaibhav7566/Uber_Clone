@@ -42,7 +42,7 @@ const WaitingForDriver = (props) => {
         <div className='flex justify-between gap-10 items-center'>
             <img
           className="h-16 w-16 rounded-full object-cover"
-          src= {props.journey?.driver?.userId?.profilePicture || "https://cdn-icons-png.flaticon.com/512/149/149071.png"  }
+          src= {props.journey?.driver?.profilePicture || "https://cdn-icons-png.flaticon.com/512/149/149071.png"  }
         />
 
         <div className='text-right flex flex-col items-end gap-0.5'>

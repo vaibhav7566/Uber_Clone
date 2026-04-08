@@ -49,6 +49,7 @@ const driverSchema = new mongoose.Schema(
           "KOLKATA",
           "PUNE",
           "AHMEDABAD",
+          "Bhopal",
         ],
         required: [true, "City is required"],
       },
@@ -87,10 +88,10 @@ const driverSchema = new mongoose.Schema(
         default: null,
       },
 
-      // Vehicle registration certificate number
-      rcNumber: {
+      // Vehicle registration number
+      vehicleNumber: {
         type: String,
-        required: [true, "Vehicle Registration number is required"],
+        required: [true, "Vehicle number is required"],
         uppercase: true,
         trim: true,
         unique: true,
@@ -112,14 +113,6 @@ const driverSchema = new mongoose.Schema(
         type: String,
         enum: ["CAR", "BIKE", "AUTO", "E_RICKSHAW", "ELECTRIC_SCOOTER"],
         required: [true, "Vehicle type is required"],
-      },
-
-      // Vehicle registration number (optional)
-      vehicleNumber: {
-        type: String,
-        uppercase: true,
-        trim: true,
-        default: null,
       },
 
       // Vehicle model (optional - e.g., "Honda City", "Royal Enfield")
@@ -262,8 +255,6 @@ const driverSchema = new mongoose.Schema(
 
 driverSchema.index({ location: "2dsphere" });
 
-// Index for faster userId lookups
-driverSchema.index({ userId: 1 });
 driverSchema.index({ socketId: 1 });
 
 // ============================================
@@ -305,7 +296,7 @@ driverSchema.methods.calculateProfileCompletion = function () {
   if (this.personalInformation.city) percentage += 10;
   if (this.personalInformation.aadharNumber) percentage += 15;
   if (this.documents.licenseNumber) percentage += 15;
-  if (this.documents.rcNumber) percentage += 10;
+  if (this.documents.vehicleNumber) percentage += 10;
   if (this.vehicleInfo.vehicleType) percentage += 10;
 
   // Optional fields (30% total)
