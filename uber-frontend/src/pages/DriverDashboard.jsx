@@ -10,11 +10,10 @@ import { useRef } from "react";
 import gsap from "gsap";
 import ConfirmRidePopup from "../components/ConfirmRidePopup";
 import { useSocket } from "../hooks/useSocket";
-// import { emit } from "node:cluster";
-import axios from "axios";
 // import { socket } from "socket.io-client";
 // const { socket } = useSocket();
 import Map from "../components/Map";
+import API from "../services/api";
 
 
 function DriverDashboard() {
@@ -121,12 +120,8 @@ function DriverDashboard() {
         console.error("Invalid ride data");
         return;
       }
-        const  journeyId  = ride._id;
-      const res = await axios.post(`http://localhost:3000/api/journey/${journeyId}/accept`, {}, {
-        headers: {
-          Authorization: `Bearer ${authState.token}`,
-        },
-      });
+      const journeyId = ride._id;
+      const res = await API.post(`/journey/${journeyId}/accept`, {});
       console.log("Ride confirmed response:", res.data);
     }
 
