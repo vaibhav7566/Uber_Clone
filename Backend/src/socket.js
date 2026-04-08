@@ -11,6 +11,7 @@ const isAllowedOrigin = (origin) => {
 
   return (
     /^https?:\/\/localhost:\d+$/i.test(origin) ||
+    /^https:\/\/([a-z0-9-]+\.)*vercel\.app$/i.test(origin) ||
     /^https:\/\/([a-z0-9-]+\.)*devtunnels\.ms$/i.test(origin)
   );
 };

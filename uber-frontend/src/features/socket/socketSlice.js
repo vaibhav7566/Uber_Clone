@@ -4,7 +4,7 @@ import io from "socket.io-client";
 // Global socket instance (outside Redux to persist across re-renders)
 let globalSocket = null;
 
-const SOCKET_BASE_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || "http://localhost:3000";
+const SOCKET_BASE_URL = import.meta.env.VITE_API_URL;
 
 const initialState = {
   isConnected: false,
@@ -116,9 +116,20 @@ export const initializeSocket = (userId, userType) => {
       return;
     }
 
+    if (!SOCKET_BASE_URL) {
+      dispatch(
+        setConnectionStatus({
+          isConnected: false,
+          error: "VITE_API_URL is not configured",
+        }),
+      );
+      return;
+    }
+
     // Create new socket connection
     globalSocket = io(SOCKET_BASE_URL, {
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
+      withCredentials: true,
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
