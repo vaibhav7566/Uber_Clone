@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useRef } from "react";
 const LocationSearchPanel = (props) => {              
   const { suggestions = [], loading = false, onSelectSuggestion } = props;
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const didScrollRef = useRef(false);
 
   const handleSuggestionClick = (suggestion) => {
     if (typeof onSelectSuggestion === "function") {
@@ -31,9 +33,29 @@ const LocationSearchPanel = (props) => {
         return (
           <div
             key={suggestion.placeId || `${description}-${index}`}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+            onTouchStart={(e) => {
+              const touch = e.touches?.[0];
+              if (!touch) return;
+              touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+              didScrollRef.current = false;
+            }}
+            onTouchMove={(e) => {
+              const touch = e.touches?.[0];
+              if (!touch) return;
+
+              const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+              const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+
+              if (deltaX > 8 || deltaY > 8) {
+                didScrollRef.current = true;
+              }
+            }}
+            onClick={() => {
+              if (didScrollRef.current) {
+                didScrollRef.current = false;
+                return;
+              }
+
               handleSuggestionClick(suggestion);
             }}
             className="flex items-center justify-start gap-4 my-3 border-gray-200 active:border-gray-700 border-2 rounded-xl px-3 py-2 cursor-pointer"
