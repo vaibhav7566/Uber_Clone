@@ -91,6 +91,7 @@
 // export default Signup;
 
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../features/auth/authSlice";
 import { signupUser } from "../features/auth/authAPI";
@@ -101,8 +102,12 @@ function Signup() {
   const { register, handleSubmit, reset } = useForm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (data) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     try {
       const res = await signupUser(data);
       const { user, token } = res.data.data;
@@ -116,6 +121,8 @@ function Signup() {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Signup failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -185,9 +192,10 @@ function Signup() {
           {/* Sign Up Button */}
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full bg-black hover:bg-zinc-800 text-white font-semibold py-3.5 px-6 rounded-lg text-base transition-colors duration-200 mt-2"
           >
-            Sign up
+            {isSubmitting ? "Registering..." : "Sign up"}
           </button> 
 
           {/* Divider */}

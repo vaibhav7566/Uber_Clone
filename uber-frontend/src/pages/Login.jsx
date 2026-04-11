@@ -103,6 +103,7 @@
 
 
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../features/auth/authSlice";
 import { loginUser } from "../features/auth/authAPI";
@@ -113,8 +114,12 @@ function Login() {
   const { register, handleSubmit } = useForm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (data) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     try {
       const payload = { password: data.password };
 
@@ -138,6 +143,8 @@ function Login() {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -190,9 +197,10 @@ function Login() {
           {/* Login Button */}
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full bg-black hover:bg-zinc-800 text-white font-semibold py-3.5 px-6 rounded-lg text-base transition-colors duration-200 mt-2"
           >
-            Continue
+            {isSubmitting ? "Logging..." : "Continue"}
           </button>
 
 
